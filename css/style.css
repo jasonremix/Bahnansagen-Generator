@@ -17,6 +17,7 @@
   --signal: #f2b705;
   --signal-tinte: #1d1500;
   --schatten: rgba(17, 26, 39, 0.08);
+  --fehler: #b42318;
 
   /* Anzeiger: bleibt in beiden Themen ein dunkles Gerät */
   --tafel-rahmen: #1e2733;
@@ -50,6 +51,7 @@
     --signal: #f5c32c;
     --signal-tinte: #1d1500;
     --schatten: rgba(0, 0, 0, 0.35);
+    --fehler: #ff8f85;
     --tafel-rahmen: #2a3442;
     --tafel-grund: #0a275c;
     --tafel-schrift: #ffffff;
@@ -74,6 +76,7 @@
   --signal: #f5c32c;
   --signal-tinte: #1d1500;
   --schatten: rgba(0, 0, 0, 0.35);
+  --fehler: #ff8f85;
   --tafel-rahmen: #2a3442;
   --tafel-grund: #0a275c;
   --tafel-schrift: #ffffff;
@@ -926,6 +929,84 @@ kbd {
   border-radius: 4px;
   background: var(--flaeche-2);
   color: var(--tinte);
+}
+
+/* Onlinestimme */
+.online {
+  gap: 12px;
+  padding: 14px;
+  background: var(--flaeche-2);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-klein);
+}
+
+.online .hilfe {
+  margin: 0;
+  max-width: 70ch;
+}
+
+.online input[type="text"],
+.online input[type="password"],
+.online select {
+  background: var(--flaeche);
+}
+
+input[type="password"] {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-klein);
+  font-family: var(--schrift-daten);
+}
+
+input[type="password"]:focus-visible {
+  outline: 2px solid var(--akzent);
+  outline-offset: 0;
+  border-color: var(--akzent);
+}
+
+.online-zugang {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.online-zugang .feld {
+  flex: 1 1 170px;
+}
+
+.online-zugang .knopf-leise {
+  min-height: 42px;
+}
+
+.online-stimmen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 560px) {
+  .online-stimmen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.online-status {
+  margin: 0;
+  min-height: 1.3em;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--akzent);
+}
+
+.online-status.fehler {
+  color: var(--fehler);
+}
+
+.online-status:empty {
+  display: none;
 }
 
 .stimmen-hinweis {

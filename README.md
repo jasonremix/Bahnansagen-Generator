@@ -24,10 +24,15 @@ Reine statische Web-App ohne Build-Schritt, ohne Server und ohne Abhängigkeiten
 - **Zugzielanzeiger als Live-Vorschau** mit Gleis, Uhrzeit, Verspätung, Hinweiszeile und
   Bahnsteigabschnitten A–G (1. Klasse wird bei der Wagenreihung markiert)
 - **Englische Fassung**: automatisch nur im Fernverkehr (ICE, IC, EC), immer oder nie
-- **Synthetischer Gong** (Dreiklang, Zweiklang, Vierklang) mit künstlichem Bahnhofshall
-  und optionalem Schlussgong, live erzeugt mit der Web Audio API
-- **Sprachausgabe** über die Web Speech API mit Auswahl der deutschen und englischen Stimme,
-  Tempo und Tonhöhe
+- **Synthetischer Gong** (Dreiklang, Zweiklang, Vierklang) mit optionalem Schlussgong,
+  live erzeugt mit der Web Audio API
+- **Bahnhofsklang**: eine Lautsprecherkette mit Bandbegrenzung, nasaler Anhebung, leichter
+  Übersteuerung, Echo weiterer Lautsprecher und Raumhall. Vorlagen: Bahnsteig, Bahnhofshalle,
+  Im Zug, Automatisch (Bordansagen klingen nach Zug)
+- **Onlinestimmen** von Microsoft Azure, Google Cloud oder ElevenLabs mit eigenem API-Schlüssel.
+  Nur sie bekommen den Bahnhofsklang, weil ihr Ton als Audiodatei ankommt.
+- **Browserstimme** über die Web Speech API als kostenlose Alternative ohne Anmeldung, mit
+  Auswahl der deutschen und englischen Stimme, Tempo und Tonhöhe
 - **Aussprachehilfe**: Abkürzungen und Uhrzeiten werden beim Sprechen ausgeschrieben
   (`ICE` → „I C E“, `NJ 420` → „Nightjet 420“, `Hbf` → „Hauptbahnhof“,
   `Halle (Saale)` → „Halle an der Saale“, `Langen (Hess)` → „Langen Hessen“,
@@ -38,11 +43,32 @@ Reine statische Web-App ohne Build-Schritt, ohne Server und ohne Abhängigkeiten
 
 ## Zur Stimme
 
-Die Stimmen kommen vom Betriebssystem bzw. Browser, nicht aus Aufnahmen. Die
-Originalansagen stammen von echten Sprecherinnen und Sprechern und sind urheberrechtlich
-geschützt, deshalb werden sie hier weder verwendet noch nachgebildet.
+Die Originalansagen stammen von echten Sprecherinnen und Sprechern und sind
+urheberrechtlich geschützt, deshalb werden sie hier weder verwendet noch nachgebildet.
 
-Am natürlichsten klingt es mit:
+### Onlinestimme mit Bahnhofsklang
+
+Unter **Klang & Stimme → Sprachausgabe** einen Dienst wählen, API-Schlüssel eintragen
+(bei Azure auch die Region, z. B. `westeurope`) und **Stimmen laden** drücken.
+
+| Dienst | Schlüssel bekommen |
+| --- | --- |
+| Microsoft Azure | Azure-Portal → Speech-Dienst anlegen → „Schlüssel und Endpunkt“ |
+| Google Cloud | Projekt → „Text-to-Speech API“ aktivieren → „Anmeldedaten“ → API-Schlüssel |
+| ElevenLabs | Konto → „Developers → API Keys“ |
+
+- Der Schlüssel wird nur im Browser gespeichert (localStorage) und direkt an den Dienst
+  geschickt. Wer die App öffentlich hostet, gibt dadurch keinen Schlüssel preis.
+- Gesprochene Ansagen werden zwischengespeichert; erneutes Abspielen kostet kein Kontingent.
+- Ist der Dienst nicht erreichbar oder lehnt den Schlüssel ab, spricht die Browserstimme und
+  die App nennt den Grund.
+- In der Vorschau auf claude.ai sind Aufrufe externer Dienste gesperrt. Onlinestimmen
+  funktionieren dort nicht, wohl aber lokal und über GitHub Pages.
+
+### Browserstimme
+
+Die Browserstimme lässt sich technisch nicht nachbearbeiten und klingt deshalb immer trocken;
+der Bahnhofsklang wirkt dann nur auf den Gong. Am natürlichsten klingt es mit:
 
 | Browser | Empfohlene Stimme |
 | --- | --- |
@@ -103,7 +129,8 @@ die Zuggattungen, das Bahnhofsverzeichnis und 200 Zufallsdurchläufe über alle 
 | `index.html` | Oberfläche |
 | `css/style.css` | Gestaltung inkl. Dunkelmodus |
 | `js/ansagen.js` | Textbausteine, Gründe, Bahnhöfe, Aussprachehilfe, Zufallsdaten (DOM-frei, auch in Node nutzbar) |
-| `js/sprecher.js` | Gong-Synthese und Sprachausgabe |
+| `js/sprecher.js` | Gong-Synthese, Lautsprecherkette (Bahnhofsklang), Browserstimme |
+| `js/onlinestimmen.js` | Anfragen an Azure, Google Cloud und ElevenLabs |
 | `js/app.js` | Formular, Anzeigetafel, Wiedergabe |
 | `js/verzeichnis.js` | Verzeichnis aller Bahnhöfe und Zuggattungen |
 | `data/bahnhoefe.js` | Bahnhofsdaten (erzeugt) |

@@ -222,6 +222,69 @@
       </div>
       <div class="felder felder-klang">
         <div class="feld breit">
+          <label for="quelle">Sprachausgabe</label>
+          <select id="quelle" name="quelle">
+            <optgroup label="Auf dem Gerät, ohne Bahnhofsklang">
+              <option value="browser">Browserstimme</option>
+            </optgroup>
+            <optgroup label="Onlinestimme mit Bahnhofsklang">
+              <option value="azure">Microsoft Azure</option>
+              <option value="google">Google Cloud</option>
+              <option value="elevenlabs">ElevenLabs</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="feld breit">
+          <label for="klang">Bahnhofsklang</label>
+          <select id="klang" name="klang">
+            <option value="auto">Automatisch</option>
+            <option value="bahnsteig">Bahnsteig</option>
+            <option value="halle">Bahnhofshalle</option>
+            <option value="zug">Im Zug</option>
+            <option value="aus">Aus</option>
+          </select>
+        </div>
+
+        <div class="feld voll online" id="online" hidden>
+          <p class="hilfe" id="online-hilfe"></p>
+          <div class="online-zugang">
+            <div class="feld">
+              <label for="online-schluessel">API-Schlüssel</label>
+              <input id="online-schluessel" type="password" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="feld" id="online-region-feld">
+              <label for="online-region">Region</label>
+              <input id="online-region" type="text" placeholder="westeurope" autocomplete="off" spellcheck="false">
+            </div>
+            <button type="button" class="knopf-leise" id="online-laden">Stimmen laden</button>
+          </div>
+          <div class="online-stimmen">
+            <div class="feld">
+              <label for="online-de">Stimme Deutsch</label>
+              <select id="online-de"></select>
+            </div>
+            <div class="feld">
+              <label for="online-en">Stimme Englisch</label>
+              <select id="online-en"></select>
+            </div>
+          </div>
+          <p class="online-status" id="online-status" role="status"></p>
+          <p class="hilfe">
+            Der Schlüssel wird nur in diesem Browser gespeichert und direkt an den gewählten Dienst geschickt.
+            Bitte keine Stimmklone echter Personen ohne deren Zustimmung verwenden.
+          </p>
+        </div>
+
+        <div class="feld breit" data-quelle="browser">
+          <label for="stimmeDe">Stimme Deutsch</label>
+          <select id="stimmeDe" name="stimmeDe"></select>
+        </div>
+        <div class="feld breit" data-quelle="browser">
+          <label for="stimmeEn">Stimme Englisch</label>
+          <select id="stimmeEn" name="stimmeEn"></select>
+        </div>
+
+        <div class="feld breit">
           <label for="gong">Gong</label>
           <div class="mit-knopf">
             <select id="gong" name="gong"></select>
@@ -238,18 +301,8 @@
         </div>
 
         <div class="feld voll schalter">
-          <label class="schalter-zeile"><input type="checkbox" id="hall" name="hall"> <span>Bahnhofshall auf dem Gong</span></label>
           <label class="schalter-zeile"><input type="checkbox" id="schlussgong" name="schlussgong"> <span>Schlussgong</span></label>
           <label class="schalter-zeile"><input type="checkbox" id="wiederholen" name="wiederholen"> <span>„Ich wiederhole“</span></label>
-        </div>
-
-        <div class="feld breit">
-          <label for="stimmeDe">Stimme Deutsch</label>
-          <select id="stimmeDe" name="stimmeDe"></select>
-        </div>
-        <div class="feld breit">
-          <label for="stimmeEn">Stimme Englisch</label>
-          <select id="stimmeEn" name="stimmeEn"></select>
         </div>
 
         <div class="feld breit">
@@ -328,8 +381,9 @@
   <div class="wrap">
     <p>
       Inoffizielles Fanprojekt ohne Verbindung zur Deutschen Bahn AG. Originalstimmen und Original-Gongs
-      werden nicht verwendet: Der Gong entsteht synthetisch, gesprochen wird mit den Stimmen deines Geräts.
-      Bitte nicht für Durchsagen in echten Bahnhöfen oder Zügen einsetzen.
+      werden nicht verwendet: Der Gong entsteht synthetisch, gesprochen wird mit den Stimmen deines Geräts
+      oder eines Sprachdienstes, den du selbst einrichtest. Bitte nicht für Durchsagen in echten Bahnhöfen
+      oder Zügen einsetzen.
     </p>
     <p>
       Stationsdaten: DB InfraGO AG (RIS::Stations, StaDa), Lizenz
@@ -355,6 +409,7 @@
 <script src="data/bahnhoefe.js"></script>
 <script src="js/ansagen.js"></script>
 <script src="js/sprecher.js"></script>
+<script src="js/onlinestimmen.js"></script>
 <script src="js/app.js"></script>
 <script src="js/verzeichnis.js"></script>
 </body>

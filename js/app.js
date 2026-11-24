@@ -6,13 +6,17 @@
 
   const A = window.Ansagen;
   const S = window.Sprecher;
+  const O = window.Onlinestimmen;
   const form = document.getElementById('ansage-form');
   const $ = (id) => document.getElementById(id);
 
   const SPEICHER_KEY = 'bahnansagen-generator:v1';
+  /* Zugangsdaten der Sprachdienste getrennt von den übrigen Einstellungen */
+  const ONLINE_KEY = 'bahnansagen-generator:online';
   const EINSTELLUNGEN = {
+    quelle: 'browser',
+    klang: 'auto',
     gong: 'dreiklang',
-    hall: true,
     schlussgong: false,
     englisch: 'auto',
     wiederholen: false,
@@ -150,6 +154,9 @@
     } catch (e) {
       gespeichert = {};
     }
+    /* Ältere Fassungen kannten nur „Bahnhofshall auf dem Gong“ an/aus. */
+    if (gespeichert.klang == null && gespeichert.hall === false) gespeichert.klang = 'aus';
+    delete gespeichert.hall;
     return Object.assign({}, A.STANDARD, EINSTELLUNGEN, gespeichert);
   }
 
@@ -221,6 +228,8 @@
     $('block-en').hidden = !(r.en && A.englischAktiv(d));
 
     tafel(r.tafel);
+    onlineAnzeigen(d.quelle);
+    hinweisZeigen(d);
     $('tempo-wert').textContent = zahl(d.tempo);
     $('hoehe-wert').textContent = zahl(d.hoehe);
     speichern(d);
@@ -246,26 +255,161 @@
     }
     if (stimmen.de.length || stimmen.en.length) speichern(lesen());
 
-    const hinweis = $('stimmen-hinweis');
     if (!S.sprachausgabe) {
-      hinweis.innerHTML =
-        '<strong>Dieser Browser hat keine Sprachausgabe.</strong> Der Gong funktioniert trotzdem. ' +
-        'Probiere einen aktuellen Chrome, Edge, Safari oder Firefox.';
+      browserHinweis = [
+        'Dieser Browser hat keine Sprachausgabe.',
+        'Der Gong funktioniert trotzdem. Probiere einen aktuellen Chrome, Edge, Safari oder Firefox.',
+      ];
     } else if (!stimmen.de.length) {
-      hinweis.innerHTML =
-        '<strong>Keine deutsche Stimme gefunden.</strong> Installiere in den Spracheinstellungen deines ' +
-        'Systems eine deutsche Sprachausgabe oder nutze Edge bzw. Chrome, die eigene Stimmen mitbringen.';
+      browserHinweis = [
+        'Keine deutsche Stimme gefunden.',
+        'Installiere in den Spracheinstellungen deines Systems eine deutsche Sprachausgabe oder nutze Edge bzw. Chrome, die eigene Stimmen mitbringen.',
+      ];
     } else {
-      hinweis.textContent =
-        'Gesprochen wird mit den Stimmen deines Geräts (' + stimmen.de.length + ' deutsche gefunden). ' +
-        'Am natürlichsten klingen die „Natural“-Stimmen in Microsoft Edge und „Google Deutsch“ in Chrome.';
+      browserHinweis = [
+        '',
+        'Gesprochen wird mit den Stimmen deines Geräts (' + stimmen.de.length + ' deutsche gefunden).',
+      ];
     }
+    hinweisZeigen(lesen());
+  }
+
+  let browserHinweis = ['', ''];
+
+  function hinweisZeigen(d) {
+    const el = $('stimmen-hinweis');
+    if (d.quelle !== 'browser') {
+      el.textContent =
+        'Die Onlinestimme läuft durch die Lautsprecherkette und bekommt so den Bahnhofsklang. ' +
+        '„Automatisch“ klingt bei Bordansagen nach Zug, sonst nach Bahnsteig. ' +
+        'Schon gesprochene Ansagen werden zwischengespeichert, erneutes Abspielen kostet kein Kontingent.';
+      return;
+    }
+    el.replaceChildren();
+    if (browserHinweis[0]) {
+      const stark = document.createElement('strong');
+      stark.textContent = browserHinweis[0];
+      el.append(stark, ' ');
+    }
+    el.append(
+      (browserHinweis[1] ? browserHinweis[1] + ' ' : '') +
+        'Der Bahnhofsklang wirkt hier nur auf den Gong, denn Browserstimmen lassen sich technisch nicht ' +
+        'nachbearbeiten. Für den vollen Klang oben eine Onlinestimme wählen.'
+    );
   }
 
   function stimmeFuer(sprache) {
     const uri = $(sprache === 'de' ? 'stimmeDe' : 'stimmeEn').value;
     const liste = stimmen[sprache];
     return liste.find((v) => v.voiceURI === uri) || liste[0] || null;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Onlinestimmen                                                       */
+  /* ------------------------------------------------------------------ */
+
+  let online = {};
+  let angezeigterAnbieter = null;
+
+  function onlineLesen() {
+    try {
+      online = JSON.parse(localStorage.getItem(ONLINE_KEY) || '{}') || {};
+    } catch (e) {
+      online = {};
+    }
+  }
+
+  function onlineSpeichern() {
+    try {
+      localStorage.setItem(ONLINE_KEY, JSON.stringify(online));
+    } catch (e) {
+      /* Speicher nicht verfügbar – Schlüssel gilt dann nur bis zum Neuladen. */
+    }
+  }
+
+  function onlineEintrag(anbieter) {
+    online[anbieter] = online[anbieter] || {};
+    return online[anbieter];
+  }
+
+  function onlineStatus(text, fehler) {
+    const el = $('online-status');
+    el.textContent = text;
+    el.classList.toggle('fehler', !!fehler);
+  }
+
+  function onlineStimmenFuellen(anbieter) {
+    const def = O.ANBIETER[anbieter];
+    const eintrag = onlineEintrag(anbieter);
+    for (const sprache of ['de', 'en']) {
+      const select = $('online-' + sprache);
+      const geladen = eintrag.stimmen && eintrag.stimmen[sprache];
+      const liste = geladen && geladen.length ? geladen : def.stimmen[sprache];
+      optionen(select, liste.length ? liste : [['', 'Erst „Stimmen laden“ drücken']]);
+      select.disabled = !liste.length;
+      if (liste.some(([id]) => id === eintrag[sprache])) select.value = eintrag[sprache];
+    }
+  }
+
+  function onlineAnzeigen(anbieter) {
+    const aktiv = !!O.ANBIETER[anbieter];
+    $('online').hidden = !aktiv;
+    document.querySelectorAll('[data-quelle="browser"]').forEach((el) => {
+      el.hidden = aktiv;
+    });
+    if (!aktiv || anbieter === angezeigterAnbieter) return;
+    angezeigterAnbieter = anbieter;
+    const def = O.ANBIETER[anbieter];
+    const eintrag = onlineEintrag(anbieter);
+    $('online-hilfe').textContent = def.hilfe;
+    $('online-schluessel').value = eintrag.schluessel || '';
+    $('online-region').value = eintrag.region || '';
+    $('online-region-feld').hidden = !def.region;
+    onlineStimmenFuellen(anbieter);
+    onlineStatus('');
+  }
+
+  /* Zugang und gewählte Stimmen für die Wiedergabe; ohne Schlüssel null. */
+  function zugangFuer(anbieter) {
+    const def = O.ANBIETER[anbieter];
+    if (!def) return null;
+    const eintrag = onlineEintrag(anbieter);
+    if (!eintrag.schluessel) return null;
+    const stimme = (sprache) =>
+      eintrag[sprache] || $('online-' + sprache).value || (def.stimmen[sprache][0] || [])[0] || '';
+    return { schluessel: eintrag.schluessel, region: eintrag.region, de: stimme('de'), en: stimme('en') };
+  }
+
+  async function stimmenAbrufen() {
+    const anbieter = angezeigterAnbieter;
+    const eintrag = onlineEintrag(anbieter);
+    const knopf = $('online-laden');
+    knopf.disabled = true;
+    onlineStatus('Stimmen werden geladen …');
+    try {
+      const zugang = { schluessel: eintrag.schluessel, region: eintrag.region };
+      const de = await O.stimmenLaden(anbieter, zugang, 'de');
+      const en = anbieter === 'elevenlabs' ? de : await O.stimmenLaden(anbieter, zugang, 'en');
+      eintrag.stimmen = { de: de, en: en };
+      onlineSpeichern();
+      if (anbieter === angezeigterAnbieter) onlineStimmenFuellen(anbieter);
+      onlineStatus(
+        anbieter === 'elevenlabs'
+          ? de.length + ' Stimmen geladen.'
+          : de.length + ' deutsche und ' + en.length + ' englische Stimmen geladen.'
+      );
+    } catch (e) {
+      onlineStatus(e.message, true);
+    } finally {
+      knopf.disabled = false;
+    }
+  }
+
+  /* „Automatisch“: Bordansagen klingen nach Zug, alles andere nach Bahnsteig. */
+  function klangFuer(d) {
+    if (d.klang !== 'auto') return d.klang;
+    const typ = A.TYPEN.find((t) => t.id === d.typ);
+    return typ && typ.gruppe === 'zug' ? 'zug' : 'bahnsteig';
   }
 
   /* ------------------------------------------------------------------ */
@@ -303,43 +447,86 @@
     anzeigeSpielt(true);
 
     const d = lesen();
+    const klang = klangFuer(d);
+    const tempo = Number(d.tempo) || 1;
+    const hoehe = Number(d.hoehe) || 1;
+    const lang = (sprache) => (sprache === 'de' ? 'de-DE' : 'en-GB');
     const de = $('text-de').value.trim();
     const en = $('block-en').hidden ? '' : $('text-en').value.trim();
-    const opt = (sprache) => ({
-      stimme: stimmeFuer(sprache),
-      lang: sprache === 'de' ? 'de-DE' : 'en-GB',
-      tempo: Number(d.tempo) || 1,
-      hoehe: Number(d.hoehe) || 1,
-    });
+    const texte = {
+      de: de && A.sprechtextDe(de),
+      wdh: de && d.wiederholen && A.sprechtextDe('Ich wiederhole: ' + de),
+      en: en && A.sprechtextEn(en),
+    };
+
+    /* Onlinestimme schon während des Gongs anfordern. */
+    const zugang = d.quelle !== 'browser' ? zugangFuer(d.quelle) : null;
+    if (d.quelle !== 'browser' && !zugang) {
+      onlineStatus('Kein API-Schlüssel eingetragen. Es spricht die Browserstimme.', true);
+    }
+    const auftraege = {};
+    if (zugang) {
+      for (const [teil, sprache] of [['de', 'de'], ['wdh', 'de'], ['en', 'en']]) {
+        if (!texte[teil]) continue;
+        auftraege[teil] = O.puffer(
+          d.quelle,
+          zugang,
+          texte[teil],
+          { stimme: zugang[sprache], lang: lang(sprache), tempo: tempo, hoehe: hoehe },
+          S.dekodieren
+        );
+        auftraege[teil].catch(() => {});
+      }
+    }
+
+    async function sagen(teil, sprache, meldung) {
+      if (auftraege[teil]) {
+        try {
+          status('Stimme wird geladen');
+          const puffer = await auftraege[teil];
+          if (abgebrochen()) return;
+          status(meldung);
+          const eingang = S.kette({ klang: klang });
+          await S.pufferFolge([{ puffer: puffer, offset: 0, dauer: puffer.duration }], eingang);
+          S.freigeben(eingang, 5000);
+          return;
+        } catch (e) {
+          onlineStatus(e.message + ' Es spricht die Browserstimme.', true);
+        }
+      }
+      if (abgebrochen()) return;
+      status(meldung);
+      await S.sprechen(texte[teil], {
+        stimme: stimmeFuer(sprache),
+        lang: lang(sprache),
+        tempo: tempo,
+        hoehe: hoehe,
+      }, abgebrochen);
+    }
 
     try {
       if (d.gong !== 'kein') {
         status('Gong');
-        await S.gong(d.gong, { hall: d.hall });
+        await S.gong(d.gong, { klang: klang });
       }
       if (abgebrochen()) return;
       await warten(150);
 
-      if (de && !abgebrochen()) {
-        status('Spricht Deutsch');
-        await S.sprechen(A.sprechtextDe(de), opt('de'), abgebrochen);
-      }
-      if (de && d.wiederholen && !abgebrochen()) {
+      if (texte.de && !abgebrochen()) await sagen('de', 'de', 'Spricht Deutsch');
+      if (texte.wdh && !abgebrochen()) {
         await warten(450);
-        status('Wiederholung');
-        await S.sprechen(A.sprechtextDe('Ich wiederhole: ' + de), opt('de'), abgebrochen);
+        await sagen('wdh', 'de', 'Wiederholung');
       }
-      if (en && !abgebrochen()) {
+      if (texte.en && !abgebrochen()) {
         await warten(500);
-        status('Spricht Englisch');
-        await S.sprechen(A.sprechtextEn(en), opt('en'), abgebrochen);
+        await sagen('en', 'en', 'Spricht Englisch');
       }
       if (d.schlussgong && d.gong !== 'kein' && !abgebrochen()) {
         await warten(300);
         status('Gong');
-        await S.gong(d.gong, { hall: d.hall, rueckwaerts: true });
+        await S.gong(d.gong, { klang: klang, rueckwaerts: true });
       }
-      if (!abgebrochen()) status(S.sprachausgabe ? 'Fertig' : 'Gong gespielt, keine Sprachausgabe');
+      if (!abgebrochen()) status(S.sprachausgabe || zugang ? 'Fertig' : 'Gong gespielt, keine Sprachausgabe');
     } finally {
       if (id === laufId) anzeigeSpielt(false);
     }
@@ -416,8 +603,24 @@
     $('kopieren').addEventListener('click', (e) => kopieren(e.currentTarget));
     $('gong-test').addEventListener('click', () => {
       const d = lesen();
-      S.gong(d.gong === 'kein' ? 'dreiklang' : d.gong, { hall: d.hall });
+      S.gong(d.gong === 'kein' ? 'dreiklang' : d.gong, { klang: klangFuer(d) });
     });
+
+    $('online-schluessel').addEventListener('input', (e) => {
+      onlineEintrag(angezeigterAnbieter).schluessel = e.target.value.trim();
+      onlineSpeichern();
+    });
+    $('online-region').addEventListener('input', (e) => {
+      onlineEintrag(angezeigterAnbieter).region = e.target.value.trim().toLowerCase();
+      onlineSpeichern();
+    });
+    ['de', 'en'].forEach((sprache) =>
+      $('online-' + sprache).addEventListener('change', (e) => {
+        onlineEintrag(angezeigterAnbieter)[sprache] = e.target.value;
+        onlineSpeichern();
+      })
+    );
+    $('online-laden').addEventListener('click', stimmenAbrufen);
 
     document.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -442,6 +645,7 @@
   /* ------------------------------------------------------------------ */
 
   aufbauen();
+  onlineLesen();
   const start = laden();
   gewuenscht.de = start.stimmeDe || '';
   gewuenscht.en = start.stimmeEn || '';
