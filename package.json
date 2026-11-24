@@ -1,0 +1,10 @@
+{
+  "name": "bahnansagen-generator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bahnhofs- und Zugansagen im Browser zusammenstellen und mit Gong und Sprachausgabe abspielen.",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node --test"
+  }
+}

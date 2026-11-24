@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bahnansagen-Generator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Bahnhofs- und Zugansagen zusammenstellen und mit Gong und Sprachausgabe im Browser abspielen. Inoffizielles Fanprojekt.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Overpass:wght@600;700;800&family=Overpass+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="kopf">
+  <div class="wrap kopf-innen">
+    <div class="marke">
+      <svg class="marke-zeichen" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+        <rect width="40" height="40" rx="6" class="marke-grund"/>
+        <path class="marke-strich" d="M9 16.5h5l8-6v19l-8-6H9z"/>
+        <path class="marke-welle" d="M26 15.5a6.5 6.5 0 0 1 0 9M29.5 12a11.5 11.5 0 0 1 0 16"/>
+      </svg>
+      <div>
+        <h1>Bahnansagen-Generator</h1>
+        <p class="unterzeile">Ansagen für Bahnsteig und Zug zusammenstellen, anpassen und mit Gong abspielen.</p>
+      </div>
+    </div>
+    <span class="plakette">Inoffiziell</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <form id="ansage-form" class="raster" autocomplete="off" novalidate>
+
+    <!-- Ansageart -->
+    <section class="bereich bereich-typen" aria-labelledby="h-art">
+      <h2 id="h-art" class="sr-only">Ansageart</h2>
+      <div class="typgruppen" id="typgruppen">
+        <!-- wird aus Ansagen.TYPEN befüllt -->
+      </div>
+    </section>
+
+    <!-- Angaben -->
+    <section class="bereich bereich-felder paneel" aria-labelledby="h-daten">
+      <div class="bereich-kopf">
+        <h2 id="h-daten">Angaben</h2>
+        <div class="kopf-aktionen">
+          <button type="button" class="knopf-leise" id="zufall">
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3 6h3.5l7 8H17M3 14h3.5l2-2.3M13.5 6H17M15 4l2 2-2 2M15 12l2 2-2 2"/></svg>
+            Zufallszug
+          </button>
+          <button type="button" class="knopf-leise" id="beispiel">Beispiel</button>
+        </div>
+      </div>
+
+      <div class="felder">
+        <div class="feld breit" data-feld="zug">
+          <label for="nummer">Zug</label>
+          <div class="zug-eingabe">
+            <select id="zugart" name="zugart" aria-label="Zuggattung"></select>
+            <input id="nummer" name="nummer" type="text" inputmode="numeric" placeholder="Nummer oder Linie">
+          </div>
+        </div>
+        <div class="feld" data-feld="gleis">
+          <label for="gleis">Gleis</label>
+          <input id="gleis" name="gleis" type="text" inputmode="numeric" maxlength="4">
+        </div>
+        <div class="feld" data-feld="zeit">
+          <label for="zeit">Abfahrt</label>
+          <input id="zeit" name="zeit" type="time">
+        </div>
+
+        <div class="feld breit" data-feld="ziel">
+          <label for="ziel">Ziel</label>
+          <input id="ziel" name="ziel" type="text" list="bahnhoefe">
+        </div>
+        <div class="feld breit" data-feld="ueber">
+          <label for="ueber" id="ueber-label">Über</label>
+          <input id="ueber" name="ueber" type="text" aria-describedby="ueber-hilfe">
+          <small class="hilfe" id="ueber-hilfe">Mehrere Halte mit Komma trennen</small>
+        </div>
+
+        <div class="feld" data-feld="verspaetung">
+          <label for="verspaetung">Verspätung</label>
+          <div class="einheit">
+            <input id="verspaetung" name="verspaetung" type="number" min="1" max="999" step="1" inputmode="numeric">
+            <span>Min.</span>
+          </div>
+        </div>
+        <div class="feld breit" data-feld="grund">
+          <label for="grund">Grund</label>
+          <select id="grund" name="grund"></select>
+        </div>
+
+        <div class="feld" data-feld="neuesGleis">
+          <label for="neuesGleis">Neues Gleis</label>
+          <input id="neuesGleis" name="neuesGleis" type="text" inputmode="numeric" maxlength="4">
+        </div>
+
+        <div class="feld breit" data-feld="abschnitte">
+          <label for="abschnittVon">1. Klasse hält in Abschnitt</label>
+          <div class="von-bis">
+            <select id="abschnittVon" name="abschnittVon" aria-label="Erster Abschnitt"></select>
+            <span>bis</span>
+            <select id="abschnittBis" name="abschnittBis" aria-label="Letzter Abschnitt"></select>
+          </div>
+        </div>
+
+        <div class="feld breit" data-feld="zielHinten">
+          <label for="zielHinten">Ziel der hinteren Wagen</label>
+          <input id="zielHinten" name="zielHinten" type="text" list="bahnhoefe">
+        </div>
+        <div class="feld breit" data-feld="teilungBhf">
+          <label for="teilungBhf">Zugteilung in</label>
+          <input id="teilungBhf" name="teilungBhf" type="text" list="bahnhoefe">
+        </div>
+
+        <div class="feld breit" data-feld="sev">
+          <label for="sevVon">Keine Züge zwischen</label>
+          <input id="sevVon" name="sevVon" type="text" list="bahnhoefe">
+        </div>
+        <div class="feld breit" data-feld="sev">
+          <label for="sevBis">und</label>
+          <input id="sevBis" name="sevBis" type="text" list="bahnhoefe">
+        </div>
+        <div class="feld voll" data-feld="sev">
+          <label for="sevHalt">Abfahrt der Ersatzbusse</label>
+          <input id="sevHalt" name="sevHalt" type="text">
+        </div>
+
+        <div class="feld breit" data-feld="halt">
+          <label for="halt">Nächster Halt</label>
+          <input id="halt" name="halt" type="text" list="bahnhoefe">
+        </div>
+        <div class="feld breit" data-feld="halt">
+          <label for="ausstieg">Ausstieg in Fahrtrichtung</label>
+          <select id="ausstieg" name="ausstieg">
+            <option value="">ohne Angabe</option>
+            <option value="links">links</option>
+            <option value="rechts">rechts</option>
+          </select>
+        </div>
+        <div class="feld voll" data-feld="halt">
+          <label for="anschluesse">Anschlüsse</label>
+          <input id="anschluesse" name="anschluesse" type="text" aria-describedby="anschluesse-hilfe">
+          <small class="hilfe" id="anschluesse-hilfe">Zum Beispiel „S 5 nach Flughafen, RE 2 nach Göttingen“</small>
+        </div>
+
+        <div class="feld voll" data-feld="freitext">
+          <label for="freitext">Eigener Ansagetext</label>
+          <textarea id="freitext" name="freitext" rows="5"></textarea>
+          <small class="hilfe">Abkürzungen wie Hbf, ICE oder Uhrzeiten werden beim Sprechen ausgeschrieben.</small>
+        </div>
+      </div>
+      <datalist id="bahnhoefe"></datalist>
+    </section>
+
+    <!-- Anzeiger und Ansagetext -->
+    <section class="bereich bereich-ausgabe" aria-labelledby="h-ausgabe">
+      <h2 id="h-ausgabe" class="sr-only">Ansage</h2>
+
+      <figure class="tafel" id="tafel" data-modus="bahnsteig">
+        <div class="tafel-kopf">
+          <span class="tafel-zeit" id="t-zeit"></span>
+          <span class="tafel-plus" id="t-plus" hidden></span>
+          <span class="tafel-label" id="t-label" hidden></span>
+          <span class="tafel-gleis" id="t-gleis-box"><small>Gleis</small><b id="t-gleis"></b></span>
+        </div>
+        <div class="tafel-zug" id="t-zug"></div>
+        <div class="tafel-via" id="t-via"></div>
+        <div class="tafel-ziel" id="t-ziel"></div>
+        <div class="tafel-hinweis" id="t-hinweis"></div>
+        <ol class="tafel-abschnitte" id="t-abschnitte" aria-label="Bahnsteigabschnitte"></ol>
+        <figcaption class="sr-only">Vorschau der Zugzielanzeige</figcaption>
+      </figure>
+
+      <div class="lautsprecher paneel">
+        <div class="textblock">
+          <div class="textblock-kopf">
+            <label for="text-de">Ansagetext</label>
+            <span class="bearbeitet" id="bearbeitet-de" hidden>
+              Von Hand geändert ·
+              <button type="button" class="knopf-link" data-neu="de">Neu erzeugen</button>
+            </span>
+          </div>
+          <textarea id="text-de" rows="5" lang="de"></textarea>
+        </div>
+        <div class="textblock" id="block-en">
+          <div class="textblock-kopf">
+            <label for="text-en">Englische Fassung</label>
+            <span class="bearbeitet" id="bearbeitet-en" hidden>
+              Von Hand geändert ·
+              <button type="button" class="knopf-link" data-neu="en">Neu erzeugen</button>
+            </span>
+          </div>
+          <textarea id="text-en" rows="4" lang="en"></textarea>
+        </div>
+
+        <div class="abspielen">
+          <button type="button" class="knopf-play" id="play" data-play>
+            <svg class="i-play" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M6 4l10 6-10 6z"/></svg>
+            <svg class="i-stopp" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><rect x="5" y="5" width="10" height="10" rx="1"/></svg>
+            <span class="play-text">Ansage abspielen</span>
+          </button>
+          <div class="status" role="status" aria-live="polite">
+            <span class="pegel" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span data-status>Bereit</span>
+          </div>
+          <button type="button" class="knopf-leise" id="kopieren">Text kopieren</button>
+        </div>
+        <p class="tastatur">Tipp: <kbd>Strg</kbd> + <kbd>Enter</kbd> spielt ab, <kbd>Esc</kbd> stoppt.</p>
+      </div>
+    </section>
+
+    <!-- Klang und Stimme -->
+    <section class="bereich bereich-klang paneel" aria-labelledby="h-klang">
+      <div class="bereich-kopf">
+        <h2 id="h-klang">Klang &amp; Stimme</h2>
+      </div>
+      <div class="felder felder-klang">
+        <div class="feld breit">
+          <label for="gong">Gong</label>
+          <div class="mit-knopf">
+            <select id="gong" name="gong"></select>
+            <button type="button" class="knopf-leise" id="gong-test">Anhören</button>
+          </div>
+        </div>
+        <div class="feld breit">
+          <label for="englisch">Englische Ansage</label>
+          <select id="englisch" name="englisch">
+            <option value="auto">Nur im Fernverkehr</option>
+            <option value="immer">Immer</option>
+            <option value="nie">Nie</option>
+          </select>
+        </div>
+
+        <div class="feld voll schalter">
+          <label class="schalter-zeile"><input type="checkbox" id="hall" name="hall"> <span>Bahnhofshall auf dem Gong</span></label>
+          <label class="schalter-zeile"><input type="checkbox" id="schlussgong" name="schlussgong"> <span>Schlussgong</span></label>
+          <label class="schalter-zeile"><input type="checkbox" id="wiederholen" name="wiederholen"> <span>„Ich wiederhole“</span></label>
+        </div>
+
+        <div class="feld breit">
+          <label for="stimmeDe">Stimme Deutsch</label>
+          <select id="stimmeDe" name="stimmeDe"></select>
+        </div>
+        <div class="feld breit">
+          <label for="stimmeEn">Stimme Englisch</label>
+          <select id="stimmeEn" name="stimmeEn"></select>
+        </div>
+
+        <div class="feld breit">
+          <label for="tempo">Tempo <output id="tempo-wert" for="tempo"></output></label>
+          <input id="tempo" name="tempo" type="range" min="0.6" max="1.4" step="0.05">
+        </div>
+        <div class="feld breit">
+          <label for="hoehe">Tonhöhe <output id="hoehe-wert" for="hoehe"></output></label>
+          <input id="hoehe" name="hoehe" type="range" min="0.5" max="1.5" step="0.05">
+        </div>
+      </div>
+      <p class="stimmen-hinweis" id="stimmen-hinweis"></p>
+    </section>
+  </form>
+</main>
+
+<footer class="fuss">
+  <div class="wrap">
+    <p>
+      Inoffizielles Fanprojekt ohne Verbindung zur Deutschen Bahn AG. Originalstimmen und Original-Gongs
+      werden nicht verwendet: Der Gong entsteht synthetisch, gesprochen wird mit den Stimmen deines Geräts.
+      Bitte nicht für Durchsagen in echten Bahnhöfen oder Zügen einsetzen.
+    </p>
+  </div>
+</footer>
+
+<div class="mobil-leiste" id="mobil-leiste">
+  <button type="button" class="knopf-play" data-play>
+    <svg class="i-play" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M6 4l10 6-10 6z"/></svg>
+    <svg class="i-stopp" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><rect x="5" y="5" width="10" height="10" rx="1"/></svg>
+    <span class="play-text">Ansage abspielen</span>
+  </button>
+  <span class="status" aria-hidden="true">
+    <span class="pegel"><i></i><i></i><i></i><i></i></span>
+    <span data-status>Bereit</span>
+  </span>
+</div>
+
+<script src="js/ansagen.js"></script>
+<script src="js/sprecher.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

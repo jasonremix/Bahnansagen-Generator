@@ -1,0 +1,1015 @@
+/*
+ * Layout: Ansageart als Leiste oben; darunter links das Stellpult (Angaben),
+ * rechts der Zugzielanzeiger mit Ansagetext und darunter Klang & Stimme.
+ * Mobil: Ansageart → Anzeiger → Angaben → Klang, Abspielleiste unten fixiert.
+ */
+:root {
+  /* Farben: kühles Bahnsteiggrau, Signalblau für Bedienung, Signalgelb für Hinweise */
+  --bg: #e8ecf1;
+  --flaeche: #ffffff;
+  --flaeche-2: #f2f4f8;
+  --tinte: #111a27;
+  --leise: #556275;
+  --linie: #d2d8e1;
+  --akzent: #1b4fd4;
+  --akzent-tinte: #ffffff;
+  --akzent-zart: #e2e9fb;
+  --signal: #f2b705;
+  --signal-tinte: #1d1500;
+  --schatten: rgba(17, 26, 39, 0.08);
+
+  /* Anzeiger: bleibt in beiden Themen ein dunkles Gerät */
+  --tafel-rahmen: #1e2733;
+  --tafel-grund: #0b2a63;
+  --tafel-schrift: #ffffff;
+  --tafel-dimm: #a8bde6;
+  --tafel-linie: #2a4b8f;
+  --tafel-streifen: #08214f;
+  --tafel-gelb: #ffd447;
+
+  /* Schrift */
+  --schrift-titel: "Overpass", "Helvetica Neue", Arial, sans-serif;
+  --schrift-text: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --schrift-daten: "Overpass Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --radius: 8px;
+  --radius-klein: 5px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1118;
+    --flaeche: #141b25;
+    --flaeche-2: #1a2330;
+    --tinte: #e6ebf2;
+    --leise: #98a4b7;
+    --linie: #283345;
+    --akzent: #7fa3ff;
+    --akzent-tinte: #0a1430;
+    --akzent-zart: #1b2948;
+    --signal: #f5c32c;
+    --signal-tinte: #1d1500;
+    --schatten: rgba(0, 0, 0, 0.35);
+    --tafel-rahmen: #2a3442;
+    --tafel-grund: #0a275c;
+    --tafel-schrift: #ffffff;
+    --tafel-dimm: #a8bde6;
+    --tafel-linie: #2a4b8f;
+    --tafel-streifen: #071d47;
+    --tafel-gelb: #ffd447;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c1118;
+  --flaeche: #141b25;
+  --flaeche-2: #1a2330;
+  --tinte: #e6ebf2;
+  --leise: #98a4b7;
+  --linie: #283345;
+  --akzent: #7fa3ff;
+  --akzent-tinte: #0a1430;
+  --akzent-zart: #1b2948;
+  --signal: #f5c32c;
+  --signal-tinte: #1d1500;
+  --schatten: rgba(0, 0, 0, 0.35);
+  --tafel-rahmen: #2a3442;
+  --tafel-grund: #0a275c;
+  --tafel-schrift: #ffffff;
+  --tafel-dimm: #a8bde6;
+  --tafel-linie: #2a4b8f;
+  --tafel-streifen: #071d47;
+  --tafel-gelb: #ffd447;
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ */
+/* Grundlagen                                                          */
+/* ------------------------------------------------------------------ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  -webkit-text-size-adjust: 100%;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--tinte);
+  font: 400 15px/1.5 var(--schrift-text);
+}
+
+.wrap {
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+h1,
+h2 {
+  font-family: var(--schrift-titel);
+  margin: 0;
+  text-wrap: balance;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--akzent);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Kopf                                                                */
+/* ------------------------------------------------------------------ */
+
+.kopf {
+  background: var(--flaeche);
+  border-bottom: 1px solid var(--linie);
+}
+
+.kopf-innen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 18px;
+}
+
+.marke {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.marke-zeichen {
+  flex: none;
+  width: 44px;
+  height: 44px;
+}
+
+.marke-grund {
+  fill: var(--tafel-grund);
+}
+
+.marke-strich {
+  fill: var(--tafel-schrift);
+}
+
+.marke-welle {
+  fill: none;
+  stroke: var(--tafel-gelb);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+h1 {
+  font-size: clamp(1.45rem, 1.1rem + 1.4vw, 2.05rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.unterzeile {
+  margin: 4px 0 0;
+  color: var(--leise);
+  font-size: 0.92rem;
+}
+
+.plakette {
+  flex: none;
+  font-family: var(--schrift-daten);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--leise);
+  border: 1px solid var(--linie);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Raster                                                              */
+/* ------------------------------------------------------------------ */
+
+main {
+  padding-block: 20px 32px;
+}
+
+.raster {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "typen"
+    "ausgabe"
+    "felder"
+    "klang";
+}
+
+.bereich-typen { grid-area: typen; }
+.bereich-felder { grid-area: felder; }
+.bereich-ausgabe { grid-area: ausgabe; }
+.bereich-klang { grid-area: klang; }
+
+@media (min-width: 900px) {
+  .raster {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "typen typen"
+      "felder ausgabe"
+      "klang ausgabe";
+    gap: 20px;
+  }
+
+  .bereich-felder,
+  .bereich-klang {
+    align-self: start;
+  }
+
+  .bereich-ausgabe {
+    align-self: start;
+    position: sticky;
+    top: 16px;
+  }
+}
+
+.paneel {
+  background: var(--flaeche);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius);
+  padding: 18px;
+  min-width: 0;
+}
+
+.bereich-kopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.bereich-kopf h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.kopf-aktionen {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* Ansageart                                                           */
+/* ------------------------------------------------------------------ */
+
+.typgruppen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+}
+
+.typgruppe {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.gruppe-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--leise);
+}
+
+.typen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.typ {
+  position: relative;
+}
+
+.typ input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.typ span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-klein);
+  background: var(--flaeche);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.typ span:hover {
+  border-color: var(--akzent);
+}
+
+.typ input:checked + span {
+  background: var(--akzent);
+  border-color: var(--akzent);
+  color: var(--akzent-tinte);
+}
+
+.typ input:focus-visible + span {
+  outline: 2px solid var(--akzent);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Felder                                                              */
+/* ------------------------------------------------------------------ */
+
+.felder {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 12px;
+}
+
+@media (min-width: 560px) {
+  .felder {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.feld {
+  display: grid;
+  gap: 5px;
+  align-content: start;
+  min-width: 0;
+}
+
+.feld.breit,
+.feld.voll {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 560px) {
+  .feld.breit {
+    grid-column: span 2;
+  }
+}
+
+.feld > label:not(.schalter-zeile),
+.textblock-kopf > label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--leise);
+}
+
+.feld output {
+  font-family: var(--schrift-daten);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--tinte);
+  margin-left: 4px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="time"],
+select,
+textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  background: var(--flaeche-2);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-klein);
+}
+
+input[type="text"]:hover,
+input[type="number"]:hover,
+input[type="time"]:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--leise);
+}
+
+input[type="text"]:focus-visible,
+input[type="number"]:focus-visible,
+input[type="time"]:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--akzent);
+  outline-offset: 0;
+  border-color: var(--akzent);
+}
+
+#gleis,
+#neuesGleis,
+#zeit,
+#verspaetung,
+#nummer {
+  font-family: var(--schrift-daten);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.hilfe {
+  color: var(--leise);
+  font-size: 0.8rem;
+}
+
+.zug-eingabe {
+  display: grid;
+  grid-template-columns: minmax(84px, 0.8fr) minmax(0, 1.2fr);
+  gap: 6px;
+}
+
+.mit-knopf {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.mit-knopf .knopf-leise {
+  min-height: 42px;
+}
+
+.einheit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--leise);
+}
+
+.von-bis {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  color: var(--leise);
+}
+
+.schalter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+
+.schalter-zeile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.schalter-zeile input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--akzent);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--akzent);
+  min-height: 32px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Knöpfe                                                              */
+/* ------------------------------------------------------------------ */
+
+.knopf-leise {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  background: var(--flaeche);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-klein);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.knopf-leise:hover {
+  border-color: var(--akzent);
+  color: var(--akzent);
+}
+
+.knopf-leise svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.knopf-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--akzent);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.knopf-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 20px 0 16px;
+  background: var(--akzent);
+  color: var(--akzent-tinte);
+  border: 0;
+  border-radius: var(--radius-klein);
+  font-family: var(--schrift-titel);
+  font-weight: 700;
+  font-size: 1.02rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.knopf-play:hover {
+  filter: brightness(1.08);
+}
+
+.knopf-play svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.knopf-play .i-stopp {
+  display: none;
+}
+
+.spielt .knopf-play {
+  background: var(--tinte);
+  color: var(--flaeche);
+}
+
+.spielt .knopf-play .i-play {
+  display: none;
+}
+
+.spielt .knopf-play .i-stopp {
+  display: block;
+}
+
+/* ------------------------------------------------------------------ */
+/* Zugzielanzeiger                                                     */
+/* ------------------------------------------------------------------ */
+
+.bereich-ausgabe {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.tafel {
+  margin: 0;
+  background: var(--tafel-grund);
+  color: var(--tafel-schrift);
+  border: 7px solid var(--tafel-rahmen);
+  border-radius: var(--radius);
+  padding: 14px 18px 14px;
+  font-family: var(--schrift-titel);
+  box-shadow: 0 10px 24px -14px var(--schatten);
+  min-width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Im Zug steht die Zusatzzeile unter dem Bahnhofsnamen. */
+.tafel[data-modus="bord"] .tafel-via {
+  order: 1;
+  margin-top: 4px;
+}
+
+.tafel[data-modus="bord"] .tafel-hinweis {
+  order: 2;
+}
+
+.tafel-kopf {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 52px;
+}
+
+.tafel-zeit {
+  font-family: var(--schrift-daten);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.7rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.tafel-plus {
+  margin-top: 4px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--tafel-gelb);
+  color: var(--tafel-grund);
+  font-family: var(--schrift-daten);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.tafel-label {
+  align-self: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--tafel-dimm);
+}
+
+.tafel-gleis {
+  margin-left: auto;
+  display: grid;
+  justify-items: center;
+  min-width: 64px;
+  padding: 4px 10px 2px;
+  border: 2px solid var(--tafel-schrift);
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.tafel-gleis small {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--tafel-dimm);
+}
+
+.tafel-gleis b {
+  font-size: 2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.tafel-zug {
+  margin-top: 4px;
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--tafel-dimm);
+}
+
+.tafel-via {
+  font-size: 0.95rem;
+  color: var(--tafel-dimm);
+  overflow-wrap: anywhere;
+}
+
+.tafel-ziel {
+  font-size: clamp(1.6rem, 1.15rem + 1.9vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.tafel-ziel.ausgefallen {
+  color: var(--tafel-dimm);
+  text-decoration: line-through;
+  text-decoration-thickness: 3px;
+  text-decoration-color: var(--tafel-gelb);
+}
+
+.tafel-hinweis {
+  margin-top: 12px;
+  padding: 6px 10px;
+  background: var(--tafel-streifen);
+  border-left: 4px solid var(--tafel-gelb);
+  color: var(--tafel-gelb);
+  font-weight: 700;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.tafel[data-modus="info"] .tafel-hinweis {
+  font-size: 1.05rem;
+  line-height: 1.4;
+}
+
+.tafel[data-modus="durchfahrt"] .tafel-ziel {
+  margin-top: 6px;
+}
+
+.tafel-abschnitte {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tafel-abschnitte li {
+  padding-top: 4px;
+  border-top: 3px solid var(--tafel-linie);
+  text-align: center;
+  font-family: var(--schrift-daten);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--tafel-dimm);
+  line-height: 1.2;
+}
+
+.tafel-abschnitte li.erste {
+  border-top-color: var(--tafel-gelb);
+  color: var(--tafel-schrift);
+}
+
+.tafel-abschnitte li.erste::after {
+  content: "1. Kl.";
+  display: block;
+  font-size: 0.62rem;
+  color: var(--tafel-gelb);
+}
+
+.tafel.live::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tafel-gelb);
+  animation: blinken 1s steps(2, start) infinite;
+}
+
+.tafel.live .tafel-gleis {
+  margin-right: 12px;
+}
+
+@keyframes blinken {
+  to { visibility: hidden; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Ansagetext und Wiedergabe                                           */
+/* ------------------------------------------------------------------ */
+
+.lautsprecher {
+  display: grid;
+  gap: 14px;
+}
+
+.textblock {
+  display: grid;
+  gap: 6px;
+}
+
+.textblock-kopf {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bearbeitet {
+  font-size: 0.82rem;
+  color: var(--leise);
+}
+
+#text-de,
+#text-en {
+  background: var(--flaeche);
+  font-size: 1rem;
+}
+
+.abspielen {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.abspielen #kopieren {
+  margin-left: auto;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--leise);
+  font-size: 0.9rem;
+  min-width: 0;
+}
+
+.pegel {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.pegel i {
+  width: 3px;
+  height: 4px;
+  background: var(--leise);
+  border-radius: 1px;
+}
+
+.spielt .pegel i {
+  background: var(--akzent);
+  animation: pegel 0.9s ease-in-out infinite;
+}
+
+.spielt .pegel i:nth-child(2) { animation-delay: -0.3s; }
+.spielt .pegel i:nth-child(3) { animation-delay: -0.6s; }
+.spielt .pegel i:nth-child(4) { animation-delay: -0.15s; }
+
+@keyframes pegel {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+.tastatur {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--leise);
+}
+
+kbd {
+  font-family: var(--schrift-daten);
+  font-size: 0.75rem;
+  padding: 1px 5px;
+  border: 1px solid var(--linie);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--flaeche-2);
+  color: var(--tinte);
+}
+
+.stimmen-hinweis {
+  margin: 14px 0 0;
+  font-size: 0.85rem;
+  color: var(--leise);
+  max-width: 65ch;
+}
+
+.stimmen-hinweis strong {
+  color: var(--tinte);
+}
+
+/* ------------------------------------------------------------------ */
+/* Fuß und mobile Abspielleiste                                        */
+/* ------------------------------------------------------------------ */
+
+.fuss {
+  border-top: 1px solid var(--linie);
+  color: var(--leise);
+  font-size: 0.85rem;
+}
+
+.fuss .wrap {
+  padding-block: 20px 28px;
+}
+
+.fuss p {
+  margin: 0;
+  max-width: 72ch;
+}
+
+.mobil-leiste {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 10px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--flaeche);
+  border-top: 1px solid var(--linie);
+  box-shadow: 0 -6px 18px -12px var(--schatten);
+  transform: translateY(0);
+  transition: transform 0.2s ease;
+}
+
+.mobil-leiste.versteckt {
+  transform: translateY(110%);
+}
+
+.mobil-leiste .knopf-play {
+  flex: none;
+}
+
+@media (max-width: 899px) {
+  body {
+    padding-bottom: 76px;
+  }
+}
+
+@media (min-width: 900px) {
+  .mobil-leiste {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .kopf-innen {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .marke {
+    align-items: flex-start;
+  }
+  .marke-zeichen {
+    width: 38px;
+    height: 38px;
+    margin-top: 2px;
+  }
+  .plakette {
+    margin-left: 52px;
+  }
+}
+
+@media (max-width: 420px) {
+  .unterzeile {
+    font-size: 0.86rem;
+  }
+  .abspielen #kopieren {
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
