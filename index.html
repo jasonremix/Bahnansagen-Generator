@@ -250,11 +250,14 @@
           <div class="online-zugang">
             <div class="feld">
               <label for="online-schluessel">API-Schlüssel</label>
-              <input id="online-schluessel" type="password" autocomplete="off" spellcheck="false">
+              <div class="mit-knopf">
+                <input id="online-schluessel" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+                <button type="button" class="knopf-leise" id="online-zeigen" aria-pressed="false">Anzeigen</button>
+              </div>
             </div>
             <div class="feld" id="online-region-feld">
               <label for="online-region">Region</label>
-              <input id="online-region" type="text" placeholder="westeurope" autocomplete="off" spellcheck="false">
+              <input id="online-region" type="text" placeholder="westeurope" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
             </div>
             <button type="button" class="knopf-leise" id="online-laden">Stimmen laden</button>
           </div>

@@ -607,8 +607,17 @@
     });
 
     $('online-schluessel').addEventListener('input', (e) => {
-      onlineEintrag(angezeigterAnbieter).schluessel = e.target.value.trim();
+      const schluessel = e.target.value.trim();
+      onlineEintrag(angezeigterAnbieter).schluessel = schluessel;
       onlineSpeichern();
+      onlineStatus(schluessel ? 'Schlüssel eingetragen (' + schluessel.length + ' Zeichen). Jetzt „Stimmen laden“ drücken.' : '');
+    });
+    $('online-zeigen').addEventListener('click', (e) => {
+      const feld = $('online-schluessel');
+      const zeigen = feld.type === 'password';
+      feld.type = zeigen ? 'text' : 'password';
+      e.currentTarget.textContent = zeigen ? 'Verbergen' : 'Anzeigen';
+      e.currentTarget.setAttribute('aria-pressed', String(zeigen));
     });
     $('online-region').addEventListener('input', (e) => {
       onlineEintrag(angezeigterAnbieter).region = e.target.value.trim().toLowerCase();
