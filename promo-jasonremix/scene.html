@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Jason Remix Motion Graphic</title>
+<style>
+@font-face{font-family:Orbitron;font-weight:500;src:url(assets/fonts/orbitron-latin-500-normal.woff2)}
+@font-face{font-family:Orbitron;font-weight:700;src:url(assets/fonts/orbitron-latin-700-normal.woff2)}
+@font-face{font-family:Orbitron;font-weight:900;src:url(assets/fonts/orbitron-latin-900-normal.woff2)}
+@font-face{font-family:Poppins;font-weight:300;src:url(assets/fonts/poppins-latin-300-normal.woff2)}
+@font-face{font-family:Poppins;font-weight:400;src:url(assets/fonts/poppins-latin-400-normal.woff2)}
+@font-face{font-family:Poppins;font-weight:500;src:url(assets/fonts/poppins-latin-500-normal.woff2)}
+@font-face{font-family:Poppins;font-weight:600;src:url(assets/fonts/poppins-latin-600-normal.woff2)}
+@font-face{font-family:Poppins;font-weight:700;src:url(assets/fonts/poppins-latin-700-normal.woff2)}
+
+:root{
+  --red:#ff1a1a; --red-hot:#ff4040; --red-deep:#8c0000; --ink:#050505;
+  --panel:rgba(22,22,24,.62); --line:rgba(255,255,255,.09); --text:#f4f4f4; --muted:#a9a9ad;
+  --glow:1;                       /* wird pro Frame mit dem Kick moduliert */
+  --safe-x:120px; --safe-y:96px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--ink)}
+body{font-family:Poppins,sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+#stage{position:absolute;inset:0;overflow:hidden;background:var(--ink)}
+canvas#bg{position:absolute;inset:0}
+.layer{position:absolute;inset:0}
+
+/* ---------- Typografie ---------- */
+.orb{font-family:Orbitron,sans-serif}
+.eyebrow{font-family:Orbitron;font-weight:700;font-size:22px;letter-spacing:.42em;color:var(--red-hot);
+  text-transform:uppercase;display:flex;align-items:center;gap:18px;
+  text-shadow:0 0 calc(14px*var(--glow)) rgba(255,30,30,.8)}
+.eyebrow::before{content:"";width:56px;height:2px;background:var(--red);box-shadow:0 0 12px var(--red)}
+.h1{font-family:Orbitron;font-weight:900;font-size:84px;line-height:1.04;letter-spacing:-.01em;text-transform:uppercase}
+.h2{font-family:Orbitron;font-weight:900;font-size:64px;line-height:1.08;text-transform:uppercase}
+.lead{font-family:Poppins;font-weight:300;font-size:30px;line-height:1.45;color:#d8d8dc}
+.red{color:var(--red)}
+.glow{text-shadow:0 0 calc(10px*var(--glow)) rgba(255,40,40,.95),0 0 calc(34px*var(--glow)) rgba(255,0,0,.75),0 0 calc(90px*var(--glow)) rgba(255,0,0,.45)}
+.wglow{text-shadow:0 0 18px rgba(255,255,255,.35),0 0 calc(50px*var(--glow)) rgba(255,0,0,.45)}
+.ch{display:inline-block;will-change:transform,opacity,filter;white-space:pre}
+.word{display:inline-block;white-space:nowrap}
+.mask{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .04em .06em}
+.mask>span{display:inline-block}
+
+/* ---------- UI-Bausteine ---------- */
+.panel{background:linear-gradient(160deg,rgba(40,40,44,.72),rgba(14,14,16,.78));border:1px solid var(--line);
+  border-radius:26px;backdrop-filter:blur(14px);box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06)}
+.chip{display:inline-flex;align-items:center;gap:14px;padding:16px 28px;border-radius:999px;font-weight:500;font-size:26px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12)}
+.chip i{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red),0 0 22px var(--red)}
+.tag{font-family:Orbitron;font-weight:700;font-size:15px;letter-spacing:.22em;text-transform:uppercase;color:#fff;
+  padding:8px 14px;border-radius:8px;background:rgba(255,26,26,.16);border:1px solid rgba(255,40,40,.5)}
+.icon{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;
+  background:radial-gradient(circle at 30% 25%,#ff5a5a,#c00000 60%,#5a0000);box-shadow:0 0 calc(30px*var(--glow)) rgba(255,0,0,.55)}
+.icon svg{width:34px;height:34px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.trace{position:absolute;inset:-1px;pointer-events:none;overflow:visible}
+.trace rect{fill:none;stroke:var(--red);stroke-width:2;filter:drop-shadow(0 0 6px #ff2020) drop-shadow(0 0 14px #ff0000)}
+
+/* ---------- HUD ---------- */
+#hud{position:absolute;inset:0;pointer-events:none}
+#hud .tl,#hud .tr,#hud .bl,#hud .br{position:absolute;display:flex;align-items:center;gap:16px}
+#hud .tl{left:56px;top:44px} #hud .tr{right:56px;top:44px} #hud .bl{left:56px;bottom:40px} #hud .br{right:56px;bottom:40px}
+#hud img{height:46px}
+.hudtxt{font-family:Orbitron;font-weight:700;font-size:15px;letter-spacing:.34em;color:#e9e9ea}
+.hudmut{font-family:Orbitron;font-weight:500;font-size:14px;letter-spacing:.3em;color:#8d8d92}
+.live{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red),0 0 24px var(--red)}
+#progress{position:absolute;left:56px;right:56px;bottom:24px;height:2px;background:rgba(255,255,255,.08)}
+#progress b{position:absolute;left:0;top:0;bottom:0;background:var(--red);box-shadow:0 0 10px var(--red),0 0 20px var(--red)}
+#progress i{position:absolute;top:-3px;width:2px;height:8px;background:rgba(255,255,255,.25)}
+.corner{position:absolute;width:34px;height:34px;border-color:rgba(255,255,255,.35);border-style:solid;border-width:0}
+.eq{display:flex;align-items:flex-end;gap:4px;height:22px}
+.eq span{width:4px;background:var(--red);box-shadow:0 0 8px var(--red);border-radius:1px}
+
+/* ---------- Szenen ---------- */
+.scene{position:absolute;inset:0;visibility:hidden;transform-origin:50% 50%}
+.center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+
+/* Intro */
+#logoWrap{position:relative;width:1020px;height:680px}
+#logoWrap img,#logoSweep{position:absolute;inset:0;width:100%;height:100%}
+#logoSweep{-webkit-mask:url(assets/logo.png) center/contain no-repeat;mask:url(assets/logo.png) center/contain no-repeat;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.95) 50%,transparent 60%) no-repeat;background-size:300% 100%}
+#rays{position:absolute;left:50%;top:46%;width:1800px;height:1800px;margin:-900px 0 0 -900px;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg,rgba(255,0,0,.20) 0deg 3deg,transparent 3deg 14deg);
+  -webkit-mask:radial-gradient(circle,#000 0,transparent 62%);mask:radial-gradient(circle,#000 0,transparent 62%);filter:blur(3px)}
+#flare{position:absolute;left:0;right:0;top:50%;height:4px;margin-top:-2px;background:linear-gradient(90deg,transparent,#fff 50%,transparent);
+  box-shadow:0 0 30px 6px rgba(255,40,40,.9),0 0 120px 30px rgba(255,0,0,.5)}
+#roles{font-family:Orbitron;font-weight:700;font-size:30px;letter-spacing:.5em;margin-top:-40px;color:#eee}
+#roles .dot{color:var(--red)}
+
+/* Tagline */
+.tg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.tg .small{font-family:Poppins;font-weight:300;font-size:44px;letter-spacing:.32em;text-transform:uppercase;color:#ddd;margin-bottom:10px}
+.tg .big{font-family:Orbitron;font-weight:900;font-size:150px;line-height:1;text-transform:uppercase;letter-spacing:-.01em}
+.outline{color:transparent;-webkit-text-stroke:2px rgba(255,40,40,.35)}
+#marq{position:absolute;left:0;top:50%;white-space:nowrap;font-family:Orbitron;font-weight:900;font-size:300px;margin-top:-170px;opacity:.5}
+
+/* About */
+#portrait{position:absolute;left:var(--safe-x);top:150px;width:520px;height:780px;border-radius:30px;overflow:hidden}
+#portrait img{position:absolute;left:50%;top:50%;width:100%;height:100%;object-fit:cover;transform-origin:50% 40%;
+  filter:grayscale(1) contrast(1.25) brightness(.95)}
+#portrait .tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,0,0,.06),rgba(150,0,0,.55));mix-blend-mode:color}
+#portrait .shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.85))}
+#portrait .scan{position:absolute;left:0;right:0;height:140px;background:linear-gradient(180deg,transparent,rgba(255,60,60,.22),transparent)}
+#portrait .cap{position:absolute;left:34px;bottom:30px;right:34px}
+#portrait .cap b{font-family:Orbitron;font-weight:900;font-size:34px;display:block;letter-spacing:.04em}
+#portrait .cap span{font-size:20px;color:#cfcfd3;letter-spacing:.12em;text-transform:uppercase}
+#aboutR{position:absolute;left:760px;right:var(--safe-x);top:180px}
+.stat{padding:30px 34px;position:relative}
+.stat .num{font-family:Orbitron;font-weight:900;font-size:92px;line-height:1;color:#fff}
+.stat .lbl{font-size:22px;color:var(--muted);margin-top:12px;letter-spacing:.04em}
+.loc{display:flex;align-items:center;gap:16px;font-size:30px;font-weight:500;margin-top:34px}
+.loc svg{width:34px;height:34px;stroke:var(--red);fill:none;stroke-width:2.2;filter:drop-shadow(0 0 8px #f00)}
+
+/* Why */
+#whyCards{position:absolute;left:var(--safe-x);right:var(--safe-x);top:560px;display:grid;grid-template-columns:repeat(4,1fr);gap:28px}
+.card{position:relative;padding:40px 34px 38px;min-height:300px}
+.card h3{font-family:Orbitron;font-weight:700;font-size:27px;line-height:1.25;margin-top:30px;text-transform:uppercase;letter-spacing:.02em}
+.card p{font-size:19px;color:var(--muted);margin-top:14px;line-height:1.5}
+.card .idx{position:absolute;right:30px;top:34px;font-family:Orbitron;font-weight:700;font-size:16px;color:rgba(255,255,255,.3);letter-spacing:.2em}
+
+/* Music */
+#plat{position:absolute;left:var(--safe-x);top:560px;width:700px;display:flex;flex-wrap:wrap;gap:18px}
+#player{position:absolute;right:var(--safe-x);top:150px;width:880px;padding:36px 40px}
+.ph{display:flex;align-items:center;gap:22px;padding-bottom:26px;border-bottom:1px solid var(--line)}
+.cover{width:96px;height:96px;border-radius:18px;background:#111;position:relative;overflow:hidden}
+.ph b{font-family:Orbitron;font-weight:900;font-size:28px;display:block}
+.ph span{color:var(--muted);font-size:19px}
+.row{display:flex;align-items:center;gap:24px;padding:20px 18px;border-radius:16px;margin-top:8px;position:relative}
+.row .n{font-family:Orbitron;font-weight:700;font-size:18px;color:#77777c;width:34px}
+.row .tt{font-size:28px;font-weight:600;flex:1}
+.row .tt small{display:block;font-size:17px;font-weight:400;color:var(--muted);margin-top:2px}
+.row .bars{display:flex;gap:4px;align-items:center;height:36px}
+.row .bars span{width:4px;border-radius:2px;background:rgba(255,255,255,.25)}
+.row.on{background:linear-gradient(90deg,rgba(255,26,26,.22),rgba(255,26,26,.04));box-shadow:inset 3px 0 0 var(--red)}
+.row.on .n{color:var(--red)} .row.on .bars span{background:var(--red);box-shadow:0 0 8px var(--red)}
+.pbar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:26px;position:relative}
+.pbar b{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--red);box-shadow:0 0 12px var(--red)}
+
+/* Preview */
+#pvTrack{position:absolute;left:0;top:420px;display:flex;gap:30px;padding-left:var(--safe-x)}
+.pv{width:300px;padding:18px 18px 26px;position:relative}
+.pv .art{width:100%;aspect-ratio:1;border-radius:18px;position:relative;overflow:hidden;background:#0c0c0c}
+.pv .art canvas{width:100%;height:100%}
+.pv .tag{position:absolute;left:30px;top:30px}
+.pv h3{font-family:Orbitron;font-weight:900;font-size:28px;margin:24px 8px 6px;text-transform:uppercase;line-height:1.15}
+.pv p{color:var(--muted);font-size:18px;margin:0 8px}
+#typing{position:absolute;left:var(--safe-x);bottom:120px;font-family:Orbitron;font-weight:700;font-size:34px;letter-spacing:.06em}
+.caret{display:inline-block;width:16px;height:36px;background:var(--red);vertical-align:-4px;margin-left:8px;box-shadow:0 0 12px var(--red)}
+
+/* Booking */
+#evGrid{position:absolute;left:var(--safe-x);right:var(--safe-x);top:410px;display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.ev{padding:30px 30px 32px;display:flex;flex-direction:column;align-items:flex-start;gap:22px;font-family:Poppins;font-weight:600;font-size:28px;position:relative}
+.ev .icon{width:56px;height:56px;border-radius:16px;flex:none}
+.ev .icon svg{width:28px;height:28px}
+#europe{position:absolute;left:var(--safe-x);right:var(--safe-x);bottom:96px;height:120px;display:flex;align-items:center;gap:40px}
+#europe .pulse{position:relative;width:120px;height:120px;flex:none}
+#europe .pulse i{position:absolute;left:50%;top:50%;border-radius:50%;border:2px solid var(--red)}
+#europe .pulse b{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px;border-radius:50%;background:var(--red);box-shadow:0 0 16px var(--red),0 0 40px var(--red)}
+
+/* Coop */
+.mq{position:absolute;left:0;white-space:nowrap;font-family:Orbitron;font-weight:900;font-size:96px;text-transform:uppercase}
+.mq span{margin-right:70px}
+.mq .s{color:var(--red);margin-right:70px}
+#partner{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);display:flex;align-items:center;gap:26px;padding:26px 44px;white-space:nowrap}
+#partner .k{font-family:Orbitron;font-weight:700;font-size:16px;letter-spacing:.34em;color:var(--red-hot)}
+#partner .v{font-family:Orbitron;font-weight:900;font-size:40px}
+
+/* Community */
+#stats{position:absolute;left:var(--safe-x);right:var(--safe-x);top:500px;display:grid;grid-template-columns:repeat(4,1fr);gap:28px}
+#stats .stat{text-align:center;padding:46px 20px}
+#stats .num{font-size:120px}
+
+/* CTA */
+#cta1{position:absolute;left:0;right:0;top:170px;text-align:center}
+#url{font-family:Orbitron;font-weight:900;font-size:150px;letter-spacing:.01em;text-transform:lowercase}
+#btn{display:inline-flex;align-items:center;gap:20px;padding:30px 60px;border-radius:999px;font-family:Orbitron;font-weight:900;font-size:32px;
+  letter-spacing:.12em;text-transform:uppercase;background:linear-gradient(180deg,#ff3b3b,#d40000);position:relative;
+  box-shadow:0 0 calc(40px*var(--glow)) rgba(255,0,0,.7),0 16px 40px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.35)}
+#btn svg{width:34px;height:34px;stroke:#fff;fill:none;stroke-width:3}
+#contact{position:absolute;left:0;right:0;bottom:150px;display:flex;justify-content:center;gap:24px}
+#contact .chip{font-size:24px;padding:18px 30px}
+#contact svg{width:26px;height:26px;stroke:var(--red);fill:none;stroke-width:2.2}
+#ctaMain{position:absolute;inset:0}
+#cursor{position:absolute;width:44px;height:44px;left:0;top:0}
+#outro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#outro img{width:760px}
+#outro .copy{font-family:Orbitron;font-weight:500;font-size:16px;letter-spacing:.4em;color:#88888d;margin-top:10px}
+
+/* Overlays */
+#wipe{position:absolute;inset:-200px;pointer-events:none}
+#wipe i{position:absolute;top:0;bottom:0;transform:skewX(-18deg)}
+#flash{position:absolute;inset:0;background:#fff;mix-blend-mode:overlay;opacity:0;pointer-events:none}
+#grain{position:absolute;inset:0;pointer-events:none;opacity:.07;mix-blend-mode:screen}
+#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.75) 100%)}
+#scan{position:absolute;inset:0;pointer-events:none;opacity:.06;background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 4px)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="bg" width="1920" height="1080"></canvas>
+
+  <!-- 1 Intro -->
+  <section class="scene" id="s-intro">
+    <div id="rays"></div>
+    <div id="flare"></div>
+    <div class="center">
+      <div id="logoWrap"><img src="assets/logo.png" alt=""><div id="logoSweep"></div></div>
+      <div id="roles" data-split>HARDTECHNO DJ <span class="dot">•</span> MUSIKPRODUZENT <span class="dot">•</span> KÜNSTLER</div>
+    </div>
+  </section>
+
+  <!-- 2 Tagline -->
+  <section class="scene" id="s-tagline">
+    <div id="marq" class="outline">HARDTECHNO • HARDTECHNO • HARDTECHNO • HARDTECHNO •</div>
+    <div class="tg" id="tg0"><div class="small" data-split>Energiegeladene</div><div class="big glow red" data-split>Beats.</div></div>
+    <div class="tg" id="tg1"><div class="small" data-split>Moderne</div><div class="big wglow" data-split>Hardtechno&#8209;Sounds.</div></div>
+    <div class="tg" id="tg2"><div class="small" data-split>Unvergessliche</div><div class="big glow red" data-split>Live&#8209;Performances.</div></div>
+  </section>
+
+  <!-- 3 About -->
+  <section class="scene" id="s-about">
+    <div id="portrait" class="panel">
+      <img src="assets/portrait.jpg" alt="">
+      <div class="tint"></div><div class="shade"></div><div class="scan"></div>
+      <div class="cap"><b>JASON BÜRGER</b><span>DJ · Producer · Artist</span></div>
+      <svg class="trace" width="520" height="780"><rect x="1" y="1" width="518" height="778" rx="30" pathLength="1000"/></svg>
+    </div>
+    <div id="aboutR">
+      <div class="eyebrow" data-scramble>Über Jason Remix</div>
+      <div class="h2" style="margin-top:30px" data-words>Leidenschaft für <span class="red glow">elektronische Musik</span> seit der Kindheit</div>
+      <div class="loc" id="loc"><svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg><span data-split>Brandenburg an der Havel</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:44px">
+        <div class="panel stat" id="st12"><div class="num glow" data-count="12">12</div><div class="lbl">Jahre alt beim ersten eigenen Track</div><svg class="trace" width="100%" height="100%"><rect x="1" y="1" width="99%" height="99%" rx="26" pathLength="1000"/></svg></div>
+        <div class="panel stat" id="st23"><div class="num glow" data-roll="2023">2023</div><div class="lbl">Professionelle Releases seit</div><svg class="trace" width="100%" height="100%"><rect x="1" y="1" width="99%" height="99%" rx="26" pathLength="1000"/></svg></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 Why -->
+  <section class="scene" id="s-why">
+    <div style="position:absolute;left:var(--safe-x);right:var(--safe-x);top:170px">
+      <div class="eyebrow" data-scramble>Warum Jason Remix</div>
+      <div class="h1" style="margin-top:30px" data-words>Mehr als nur ein DJ –<br><span class="red glow">ein unvergessliches</span> Musikerlebnis</div>
+    </div>
+    <div id="whyCards"></div>
+  </section>
+
+  <!-- 5 Music -->
+  <section class="scene" id="s-music">
+    <div style="position:absolute;left:var(--safe-x);top:170px;width:760px">
+      <div class="eyebrow" data-scramble>Musik</div>
+      <div class="h1" style="margin-top:30px" data-words>Höre die <span class="red glow">neuesten</span> Releases</div>
+    </div>
+    <div id="plat"></div>
+    <div id="player" class="panel">
+      <div class="ph"><div class="cover"><canvas width="192" height="192" id="cov" style="width:100%;height:100%"></canvas></div>
+        <div style="flex:1"><b>JASON REMIX</b><span>Releases · Hardtechno · Remix</span></div>
+        <div class="eq" id="peq"></div></div>
+      <div id="rows"></div>
+      <div class="pbar"><b id="pbar"></b></div>
+    </div>
+  </section>
+
+  <!-- 6 Preview -->
+  <section class="scene" id="s-preview">
+    <div style="position:absolute;left:var(--safe-x);top:150px">
+      <div class="eyebrow" data-scramble>Exklusive Preview</div>
+      <div class="h1" style="margin-top:30px" data-words>Unveröffentlichte <span class="red glow">Songs</span></div>
+    </div>
+    <div id="pvTrack"></div>
+    <div id="typing"><span id="typed"></span><i class="caret"></i></div>
+  </section>
+
+  <!-- 7 Booking -->
+  <section class="scene" id="s-booking">
+    <div style="position:absolute;left:var(--safe-x);right:var(--safe-x);top:170px">
+      <div class="eyebrow" data-scramble>Booking</div>
+      <div class="h1" style="margin-top:30px" data-words>Jason Remix für <span class="red glow">Ihr Event</span></div>
+    </div>
+    <div id="evGrid"></div>
+    <div id="europe"><div class="pulse"><i></i><i></i><i></i><b></b></div>
+      <div><div class="h2" data-split style="font-size:56px">Deutschland &amp; Europa</div>
+      <div class="lead" style="margin-top:6px" data-split>Verfügbar für nationale und internationale Events und Touren</div></div></div>
+  </section>
+
+  <!-- 8 Coop -->
+  <section class="scene" id="s-coop">
+    <div class="center" style="justify-content:flex-start;padding-top:170px">
+      <div class="eyebrow" data-scramble>Kooperationen</div>
+      <div class="h1" style="margin-top:30px" data-words>Gemeinsam <span class="red glow">mehr</span> erreichen</div>
+    </div>
+    <div class="mq" id="mq1" style="top:470px"></div>
+    <div class="mq outline" id="mq2" style="top:600px"></div>
+    <div id="partner" class="panel"><span class="k">OFFIZIELLER PARTNER</span><span class="v" data-split>NordVPN</span></div>
+  </section>
+
+  <!-- 9 Community -->
+  <section class="scene" id="s-community">
+    <div class="center" style="justify-content:flex-start;padding-top:170px">
+      <div class="eyebrow" data-scramble>Community</div>
+      <div class="h1" style="margin-top:30px" data-words>Gemeinsam die <span class="red glow">Community</span> stärken</div>
+    </div>
+    <div id="stats"></div>
+  </section>
+
+  <!-- 10 CTA -->
+  <section class="scene" id="s-cta">
+    <div id="ctaMain">
+      <div id="cta1">
+        <div class="eyebrow" style="justify-content:center" data-scramble>Hardtechno · DJ · Musikproduzent</div>
+        <div class="h2" style="margin-top:28px;font-size:60px" data-words>Bereit für das nächste <span class="red glow">unvergessliche</span> Event?</div>
+      </div>
+      <div class="center" style="top:120px">
+        <div id="url" class="glow" data-split>jasonremix.de</div>
+        <div id="btnWrap" style="margin-top:34px"><div id="btn">Jetzt buchen <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div>
+      </div>
+      <div id="contact">
+        <div class="chip"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>jasonbuerger@icloud.com</div>
+        <div class="chip"><svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="m10 9 5 3-5 3z"/></svg>@jasonremixorginal</div>
+        <div class="chip"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Antwort in 24–48 Std.</div>
+      </div>
+      <svg id="cursor" viewBox="0 0 24 24"><path d="M4 2l15 9-6.5 1.6L9 19z" fill="#fff" stroke="#000" stroke-width="1.2"/></svg>
+    </div>
+    <div id="outro"><img src="assets/logo.png" alt=""><div class="copy">© 2026 JASON REMIX · JASONREMIX.DE</div></div>
+  </section>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="corner" style="left:30px;top:24px;border-left-width:2px;border-top-width:2px"></div>
+    <div class="corner" style="right:30px;top:24px;border-right-width:2px;border-top-width:2px"></div>
+    <div class="corner" style="left:30px;bottom:44px;border-left-width:2px;border-bottom-width:2px"></div>
+    <div class="corner" style="right:30px;bottom:44px;border-right-width:2px;border-bottom-width:2px"></div>
+    <div class="tl"><img src="assets/logo.png" alt=""><span class="hudtxt">JASON REMIX</span></div>
+    <div class="tr"><span class="live"></span><span class="hudtxt">JASONREMIX.DE</span></div>
+    <div class="bl"><span class="hudtxt" id="secNo">01</span><span class="hudmut" id="secName">INTRO</span></div>
+    <div class="br"><div class="eq" id="heq"></div><span class="hudmut">150 BPM</span></div>
+    <div id="progress"><b></b></div>
+  </div>
+
+  <div id="wipe"></div>
+  <div id="flash"></div>
+  <div id="grain"></div>
+  <div id="scan"></div>
+  <div id="vig"></div>
+</div>
+
+<script src="build/timeline.js"></script>
+<script src="motion.js"></script>
+</body>
+</html>
