@@ -23,6 +23,28 @@
   };
   const GRUPPEN = { bahnsteig: 'Am Bahnsteig', zug: 'Im Zug', eigene: 'Eigene' };
 
+  /* Alle Bahnhöfe aus data/bahnhoefe.js; ohne Datendatei die kleine Liste aus ansagen.js. */
+  const DATEN = window.BAHNHOFSDATEN && window.BAHNHOFSDATEN.liste;
+  const BAHNHOFSNAMEN = DATEN ? DATEN.map((s) => s[0]) : A.BAHNHOEFE;
+  /* Zufallszüge: Fernzüge zwischen Fernverkehrshalten, Nahverkehr innerhalb eines Bundeslands. */
+  const FERNHALTE = DATEN ? DATEN.filter((s) => s[4] & 3).map((s) => s[0]) : [];
+  const NAHVERKEHR_NACH_LAND = DATEN
+    ? Object.values(
+      DATEN.reduce((laender, s) => {
+        if (s[3] && s[4] & 28) (laender[s[3]] = laender[s[3]] || []).push(s[0]);
+        return laender;
+      }, {})
+    ).filter((liste) => liste.length >= 40)
+    : [];
+
+  function zufallsBahnhoefe() {
+    if (!DATEN) return null;
+    return {
+      fern: FERNHALTE,
+      regional: NAHVERKEHR_NACH_LAND[Math.floor(Math.random() * NAHVERKEHR_NACH_LAND.length)],
+    };
+  }
+
   const bearbeitet = { de: false, en: false };
   const gewuenscht = { de: '', en: '' };
   const stimmen = { de: [], en: [] };
@@ -68,12 +90,21 @@
       gruppen.append(gruppe);
     }
 
-    optionen($('zugart'), A.ZUGARTEN.map((z) => [z, z]));
+    $('zugart').replaceChildren(
+      ...A.GATTUNGSARTEN.map((art) => {
+        const gruppe = document.createElement('optgroup');
+        gruppe.label = art.label;
+        gruppe.append(
+          ...A.ZUGGATTUNGEN.filter((g) => g.art === art.id).map((g) => new Option(g.id + ' · ' + g.name, g.id))
+        );
+        return gruppe;
+      })
+    );
     optionen($('grund'), A.GRUENDE.map((g) => [g.id, g.label]));
     optionen($('abschnittVon'), A.ABSCHNITTE.map((a) => [a, a]));
     optionen($('abschnittBis'), A.ABSCHNITTE.map((a) => [a, a]));
     optionen($('gong'), [...Object.entries(S.GONGS).map(([id, g]) => [id, g.label]), ['kein', 'Kein Gong']]);
-    $('bahnhoefe').replaceChildren(...A.BAHNHOEFE.map((b) => new Option(b)));
+    $('bahnhoefe').replaceChildren(...BAHNHOFSNAMEN.map((b) => new Option(b)));
     $('t-abschnitte').replaceChildren(
       ...A.ABSCHNITTE.map((a) => {
         const li = document.createElement('li');
@@ -374,7 +405,7 @@
     );
 
     $('zufall').addEventListener('click', () => {
-      schreiben(A.zufallsDaten());
+      schreiben(A.zufallsDaten(Math.random, zufallsBahnhoefe()));
       neuErzeugen();
     });
     $('beispiel').addEventListener('click', () => {

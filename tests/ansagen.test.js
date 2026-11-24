@@ -103,3 +103,53 @@ test('Zufallsdaten ergeben für jede Ansageart gültige Texte', () => {
     }
   }
 });
+
+test('Zuggattungen sind vollständig beschrieben und eindeutig', () => {
+  const ids = A.ZUGGATTUNGEN.map((g) => g.id);
+  assert.equal(new Set(ids).size, ids.length);
+  const arten = A.GATTUNGSARTEN.map((a) => a.id);
+  for (const g of A.ZUGGATTUNGEN) {
+    assert.ok(g.name && g.info && g.sprich, g.id);
+    assert.ok(arten.includes(g.art), g.id);
+  }
+  for (const id of ['ICE', 'IC', 'EC', 'RE', 'RB', 'S', 'NJ', 'FLX']) assert.ok(ids.includes(id), id);
+});
+
+test('Gattungsnamen werden nur vor Zugnummern ausgeschrieben', () => {
+  assert.equal(A.sprechtextDe('NJ 40420 und RJX 63'), 'Nightjet 40420 und Railjet Express 63');
+  assert.equal(A.sprechtextDe('Es ist ES spät'), 'Es ist ES spät');
+  assert.match(A.bauen('begruessung', daten({ zugart: 'NJ', nummer: '420' })).de, /^Herzlich willkommen im NJ 420/);
+  assert.equal(A.englischAktiv({ typ: 'einfahrt', zugart: 'NJ', englisch: 'auto' }), true);
+  assert.equal(A.englischAktiv({ typ: 'einfahrt', zugart: 'MEX', englisch: 'auto' }), false);
+});
+
+test('Klammerzusätze und Abkürzungen in Bahnhofsnamen', () => {
+  assert.equal(A.sprechtextDe('Halle (Saale) Hbf'), 'Halle an der Saale Hauptbahnhof');
+  assert.equal(A.sprechtextDe('Auerbach (b Mosbach, Baden)'), 'Auerbach bei Mosbach, Baden');
+  assert.equal(A.sprechtextDe('Langen (Hess)'), 'Langen Hessen');
+  assert.equal(A.sprechtextDe('Bad St Peter Süd'), 'Bad Sankt Peter Süd');
+  assert.equal(A.sprechtextDe('Köln Trimbornstr'), 'Köln Trimbornstraße');
+  assert.equal(A.sprechtextDe('Frankfurt (M) Flughafen Fernbf'), 'Frankfurt am Main Flughafen Fernbahnhof');
+});
+
+test('Bahnhofsverzeichnis ist vollständig und sauber', () => {
+  const fs = require('node:fs');
+  const vm = require('node:vm');
+  const kontext = { window: {} };
+  vm.runInNewContext(fs.readFileSync(require.resolve('../data/bahnhoefe.js'), 'utf8'), kontext);
+  const d = kontext.window.BAHNHOFSDATEN;
+  assert.ok(d.liste.length > 6000, 'zu wenige Bahnhöfe: ' + d.liste.length);
+  const namen = new Set();
+  for (const s of d.liste) {
+    assert.equal(s.length, d.felder.length);
+    assert.match(s[1], /^80\d{5}$/, s[0]);
+    assert.ok(s[4] > 0 && s[4] < 32, s[0]);
+    assert.ok(s[3] >= 0 && s[3] <= 16, s[0]);
+    assert.ok(!namen.has(s[0]), 'doppelt: ' + s[0]);
+    assert.doesNotMatch(s[0], /\bSEV\b|\(Bus\)/, s[0]);
+    namen.add(s[0]);
+  }
+  for (const n of ['Berlin Hbf', 'Hamburg Hbf', 'München Hbf', 'Köln Hbf', 'Frankfurt (Main) Hbf']) {
+    assert.ok(namen.has(n), n + ' fehlt');
+  }
+});

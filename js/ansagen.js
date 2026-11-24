@@ -29,10 +29,43 @@
     { id: 'freitext', label: 'Freitext', gruppe: 'eigene' },
   ];
 
-  const ZUGARTEN = ['ICE', 'IC', 'EC', 'IRE', 'RE', 'RB', 'S'];
-  const FERNVERKEHR = ['ICE', 'IC', 'EC'];
+  /* Zuggattungen im Personenverkehr in Deutschland. `sprich` ist die Aussprache. */
+  const GATTUNGSARTEN = [
+    { id: 'fern', label: 'Fernverkehr' },
+    { id: 'nacht', label: 'Nachtzüge' },
+    { id: 'regio', label: 'Regionalverkehr' },
+    { id: 's', label: 'S-Bahn' },
+  ];
+
+  const ZUGGATTUNGEN = [
+    { id: 'ICE', name: 'Intercity-Express', art: 'fern', sprich: 'I C E', info: 'Hochgeschwindigkeitszüge der DB Fernverkehr, auch ins benachbarte Ausland' },
+    { id: 'ECE', name: 'Eurocity-Express', art: 'fern', sprich: 'E C E', info: 'Schnelle internationale Züge, z. B. Frankfurt–Mailand und München–Zürich' },
+    { id: 'IC', name: 'Intercity', art: 'fern', sprich: 'I C', info: 'Fernverkehrszüge der DB, teils als doppelstöckiger Intercity 2' },
+    { id: 'EC', name: 'Eurocity', art: 'fern', sprich: 'E C', info: 'Internationale Fernverkehrszüge mit Partnerbahnen aus den Nachbarländern' },
+    { id: 'RJX', name: 'Railjet Xpress', art: 'fern', sprich: 'Railjet Express', info: 'Schnelle Railjets der ÖBB mit wenigen Halten, z. B. München–Wien' },
+    { id: 'RJ', name: 'Railjet', art: 'fern', sprich: 'Railjet', info: 'Fernverkehrszüge der ÖBB zwischen Deutschland und Österreich' },
+    { id: 'TGV', name: 'TGV', art: 'fern', sprich: 'T G V', info: 'Hochgeschwindigkeitszüge der SNCF, z. B. Paris–Frankfurt und Paris–Stuttgart–München' },
+    { id: 'EST', name: 'Eurostar', art: 'fern', sprich: 'Eurostar', info: 'Hochgeschwindigkeitszüge aus Paris und Brüssel nach Köln und ins Ruhrgebiet (früher Thalys)' },
+    { id: 'FLX', name: 'Flixtrain', art: 'fern', sprich: 'Flixtrain', info: 'Fernzüge des privaten Anbieters Flix' },
+    { id: 'NJ', name: 'Nightjet', art: 'nacht', sprich: 'Nightjet', info: 'Nachtzüge der ÖBB mit Sitz-, Liege- und Schlafwagen' },
+    { id: 'EN', name: 'EuroNight', art: 'nacht', sprich: 'Euro-Night', info: 'Internationale Nachtzüge verschiedener europäischer Bahnen' },
+    { id: 'ES', name: 'European Sleeper', art: 'nacht', sprich: 'European Sleeper', info: 'Nachtzug eines niederländisch-belgischen Anbieters, u. a. Brüssel–Berlin–Prag' },
+    { id: 'IRE', name: 'Interregio-Express', art: 'regio', sprich: 'I R E', info: 'Schnelle Regionalzüge über längere Strecken mit wenigen Halten' },
+    { id: 'RE', name: 'Regional-Express', art: 'regio', sprich: 'R E', info: 'Regionalzüge mit weniger Halten als die Regionalbahn' },
+    { id: 'MEX', name: 'Metropolexpress', art: 'regio', sprich: 'M E X', info: 'Regionalzüge in der Region Stuttgart (Baden-Württemberg)' },
+    { id: 'RB', name: 'Regionalbahn', art: 'regio', sprich: 'R B', info: 'Regionalzüge mit Halt an allen Stationen' },
+    { id: 'TER', name: 'TER', art: 'regio', sprich: 'T E R', info: 'Französische Regionalzüge im grenzüberschreitenden Verkehr, z. B. Straßburg–Offenburg' },
+    { id: 'REX', name: 'Regionalexpress (Österreich)', art: 'regio', sprich: 'R E X', info: 'Österreichische Regionalzüge im grenznahen Verkehr' },
+    { id: 'R', name: 'Regionalzug', art: 'regio', sprich: 'R', info: 'Regionalzüge aus Österreich und der Schweiz im grenznahen Verkehr' },
+    { id: 'S', name: 'S-Bahn', art: 's', sprich: 'S', info: 'Schnellbahnen in Ballungsräumen' },
+    { id: 'RS', name: 'Regio-S-Bahn', art: 's', sprich: 'R S', info: 'Regionale S-Bahn-Linien, z. B. rund um Bremen' },
+  ];
+
+  const ZUGARTEN = ZUGGATTUNGEN.map((g) => g.id);
+  /* Fern- und Nachtzüge bekommen im Automatikmodus eine englische Ansage. */
+  const FERNVERKEHR = ZUGGATTUNGEN.filter((g) => g.art === 'fern' || g.art === 'nacht').map((g) => g.id);
   /* Regionalbahn und S-Bahn sind feminin: „in der S 1“, sonst „im ICE“. */
-  const FEMININ = ['RB', 'S'];
+  const FEMININ = ['RB', 'S', 'RS'];
 
   const ABSCHNITTE = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
@@ -410,28 +443,60 @@
   /* Sprachaufbereitung: Abkürzungen ausschreiben, Uhrzeiten aussprechen  */
   /* ------------------------------------------------------------------ */
 
+  /* Klammerzusätze in Bahnhofsnamen: „Halle (Saale)“ → „Halle an der Saale“. */
+  const FLUESSE = {
+    M: 'am Main', Main: 'am Main', Rhein: 'am Rhein', Neckar: 'am Neckar', Inn: 'am Inn', Lech: 'am Lech',
+    Oder: 'an der Oder', Saale: 'an der Saale', Lahn: 'an der Lahn', Sieg: 'an der Sieg', Donau: 'an der Donau',
+    Mosel: 'an der Mosel', Elbe: 'an der Elbe', Ruhr: 'an der Ruhr', Nahe: 'an der Nahe', Enz: 'an der Enz',
+    Elster: 'an der Elster', Pegnitz: 'an der Pegnitz', Leine: 'an der Leine', Fils: 'an der Fils',
+    Murr: 'an der Murr', Ilm: 'an der Ilm', Ems: 'an der Ems', Isar: 'an der Isar', Havel: 'an der Havel',
+    Spree: 'an der Spree', Werra: 'an der Werra', Unstrut: 'an der Unstrut', Tauber: 'an der Tauber',
+    Aisch: 'an der Aisch', Iller: 'an der Iller', Breisgau: 'im Breisgau', Weinstr: 'an der Weinstraße',
+  };
+  const ABKUERZUNGEN = {
+    b: 'bei', 'b.': 'bei', Kr: 'Kreis', Bz: 'Bezirk', Sachs: 'Sachsen', Westf: 'Westfalen', Württ: 'Württemberg',
+    Thür: 'Thüringen', Oberbay: 'Oberbayern', Obb: 'Oberbayern', Niederbay: 'Niederbayern', Bay: 'Bayern',
+    Vogtl: 'Vogtland', Meckl: 'Mecklenburg', Erzgeb: 'Erzgebirge', Erzg: 'Erzgebirge', Hess: 'Hessen',
+    Oberhess: 'Oberhessen', Rheinhess: 'Rheinhessen', Holst: 'Holstein', Schwab: 'Schwaben', Oldb: 'Oldenburg',
+    Han: 'Hannover', Oberpf: 'Oberpfalz', Unterfr: 'Unterfranken', Oberfr: 'Oberfranken', Mittelfr: 'Mittelfranken',
+    Anh: 'Anhalt', Odenw: 'Odenwald', Schwarzw: 'Schwarzwald', Rheinl: 'Rheinland', Rhld: 'Rheinland',
+    Dillkr: 'Dillkreis', Bergstr: 'Bergstraße', Hohenz: 'Hohenzollern', Westerw: 'Westerwald', Ww: 'Westerwald',
+    Ostfriesl: 'Ostfriesland', Saalkr: 'Saalkreis', Altm: 'Altmark', Nl: 'Niederlausitz',
+  };
+
+  function klammerzusatz(_, inhalt) {
+    const rein = inhalt.trim().replace(/\.$/, '');
+    if (FLUESSE[rein]) return FLUESSE[rein];
+    return inhalt
+      .split(/(\s*,\s*|\s+)/)
+      .map((teil) => ABKUERZUNGEN[teil] || ABKUERZUNGEN[teil.replace(/\.$/, '')] || teil)
+      .join('');
+  }
+
   const ZUSAETZE = [
-    [/\((?:Main|M)\)/g, 'am Main'],
-    [/\(Oder\)/g, 'an der Oder'],
-    [/\(Saale\)/g, 'an der Saale'],
-    [/\(Westf\.?\)/g, 'Westfalen'],
-    [/\(Breisgau\)/g, 'im Breisgau'],
-    [/\(Weinstr\.?\)/g, 'an der Weinstraße'],
-    [/\(Sylt\)/g, 'Sylt'],
-    [/\(([^)]+)\)/g, '$1'],
+    [/\(([^)]+)\)/g, klammerzusatz],
+    [/\bSt\.?\s+(?=[A-ZÄÖÜ])/g, 'Sankt '],
+    [/([a-zäöüß])str\.?(?=[\s/,)]|$)/g, '$1straße'],
+    [/\bStr\.?(?=\s|$)/g, 'Straße'],
+    [/\bFernbf\b/g, 'Fernbahnhof'],
+    [/\bPbf\b/g, 'Personenbahnhof'],
+    [/\bHp\b/g, 'Haltepunkt'],
+    [/\bunt\.?\s+(?=Bf\b|Bahnhof)/g, 'unterer '],
   ];
 
-  const ZUGGATTUNGEN = [
-    [/\bICE\b/g, 'I C E'],
-    [/\bECE\b/g, 'E C E'],
-    [/\bIC\b/g, 'I C'],
-    [/\bEC\b/g, 'E C'],
-    [/\bIRE\b/g, 'I R E'],
-    [/\bRE\b/g, 'R E'],
-    [/\bRB\b/g, 'R B'],
-    [/\bSBB\b/g, 'S B B'],
-    [/\bBER\b/g, 'B E R'],
-  ];
+  /* Buchstabierte Gattungen immer ersetzen, Namen wie „NJ“ → „Nightjet“ nur vor einer Zugnummer. */
+  const ZUGGATTUNG_REGELN = ZUGGATTUNGEN.filter((g) => g.sprich !== g.id)
+    .sort((a, b) => b.id.length - a.id.length)
+    .map((g) =>
+      /^([A-Z] )+[A-Z]$/.test(g.sprich)
+        ? [new RegExp('\\b' + g.id + '\\b', 'g'), g.sprich]
+        : [new RegExp('\\b' + g.id + '(?=\\s?\\d)', 'g'), g.sprich]
+    )
+    .concat([
+      [/\bSBB\b/g, 'S B B'],
+      [/\bBER\b/g, 'B E R'],
+      [/\bBASF\b/g, 'B A S F'],
+    ]);
 
   function uhrzeitDe(_, h, m) {
     const stunde = parseInt(h, 10);
@@ -446,7 +511,7 @@
   function sprechtextDe(text) {
     let t = wert(text);
     t = ersetzen(t, ZUSAETZE);
-    t = ersetzen(t, ZUGGATTUNGEN);
+    t = ersetzen(t, ZUGGATTUNG_REGELN);
     t = ersetzen(t, [
       [/\bHbf\b/g, 'Hauptbahnhof'],
       [/\bBf\b/g, 'Bahnhof'],
@@ -470,7 +535,7 @@
   function sprechtextEn(text) {
     let t = wert(text);
     t = ersetzen(t, ZUSAETZE);
-    t = ersetzen(t, ZUGGATTUNGEN);
+    t = ersetzen(t, ZUGGATTUNG_REGELN);
     t = ersetzen(t, [
       [/\bHbf\b/g, 'Hauptbahnhof'],
       [/\bBf\b/g, 'Bahnhof'],
@@ -484,19 +549,30 @@
   /* Zufallsdaten                                                        */
   /* ------------------------------------------------------------------ */
 
-  function zufallsDaten(rng) {
+  /**
+   * Zufällige, plausible Zugdaten.
+   * @param {function} [rng]   Zufallsquelle, Standard Math.random
+   * @param {{fern?: string[], regional?: string[]}} [bahnhoefe]  eigene Bahnhofslisten
+   */
+  function zufallsDaten(rng, bahnhoefe) {
     rng = rng || Math.random;
+    const fernPool = (bahnhoefe && bahnhoefe.fern && bahnhoefe.fern.length > 10) ? bahnhoefe.fern : FERN_BAHNHOEFE;
+    const regioPool = (bahnhoefe && bahnhoefe.regional && bahnhoefe.regional.length > 10) ? bahnhoefe.regional : REGIONAL_BAHNHOEFE;
     const pick = (a) => a[Math.floor(rng() * a.length)];
     const zahl = (a, b) => a + Math.floor(rng() * (b - a + 1));
     const zwei = (n) => String(n).padStart(2, '0');
 
-    const zugart = pick(['ICE', 'ICE', 'ICE', 'IC', 'EC', 'IRE', 'RE', 'RE', 'RB', 'S']);
+    const zugart = pick([
+      'ICE', 'ICE', 'ICE', 'ICE', 'IC', 'IC', 'EC', 'ECE', 'RJ', 'NJ', 'FLX',
+      'IRE', 'RE', 'RE', 'RE', 'RB', 'RB', 'RB', 'S', 'S', 'S',
+    ]);
     const nummer = {
-      ICE: zahl(500, 1999), IC: zahl(2000, 2399), EC: zahl(100, 399),
+      ICE: zahl(500, 1999), ECE: zahl(30, 59), IC: zahl(2000, 2399), EC: zahl(100, 399),
+      RJ: zahl(60, 69), NJ: zahl(40400, 40499), FLX: zahl(1200, 1899),
       IRE: zahl(1, 9), RE: zahl(1, 99), RB: zahl(10, 99), S: zahl(1, 9),
     }[zugart];
 
-    const pool = FERNVERKEHR.includes(zugart) ? FERN_BAHNHOEFE : REGIONAL_BAHNHOEFE;
+    const pool = FERNVERKEHR.includes(zugart) ? fernPool : regioPool;
     const benutzt = new Set();
     const station = (liste) => {
       const frei = liste.filter((s) => !benutzt.has(s));
@@ -514,7 +590,7 @@
     const von = zahl(0, 5);
     const bis = Math.min(von + zahl(0, 2), 6);
     const grund = pick(GRUENDE.filter((g) => g.id)).id;
-    const anschluss = () => pick(['S', 'RE', 'RB']) + ' ' + zahl(1, 49) + ' nach ' + station(REGIONAL_BAHNHOEFE);
+    const anschluss = () => pick(['S', 'RE', 'RB']) + ' ' + zahl(1, 49) + ' nach ' + station(regioPool);
 
     return {
       zugart: zugart,
@@ -530,8 +606,8 @@
       abschnittBis: ABSCHNITTE[bis],
       zielHinten: station(pool),
       teilungBhf: station(pool),
-      sevVon: station(REGIONAL_BAHNHOEFE),
-      sevBis: station(REGIONAL_BAHNHOEFE),
+      sevVon: station(regioPool),
+      sevBis: station(regioPool),
       sevHalt: pick(['Bahnhofsvorplatz, Bussteig ' + zahl(1, 6), 'Busbahnhof, Steig ' + zahl(1, 12), 'Haltestelle vor dem Haupteingang']),
       halt: station(pool),
       ausstieg: pick(['links', 'rechts']),
@@ -541,6 +617,8 @@
 
   return {
     TYPEN: TYPEN,
+    GATTUNGSARTEN: GATTUNGSARTEN,
+    ZUGGATTUNGEN: ZUGGATTUNGEN,
     ZUGARTEN: ZUGARTEN,
     FERNVERKEHR: FERNVERKEHR,
     ABSCHNITTE: ABSCHNITTE,

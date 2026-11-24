@@ -206,6 +206,26 @@ h1 {
   font-size: 0.92rem;
 }
 
+.kopf-rechts {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.kopf-link {
+  color: var(--akzent);
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.kopf-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .plakette {
   flex: none;
   font-family: var(--schrift-daten);
@@ -468,7 +488,7 @@ textarea {
 
 .zug-eingabe {
   display: grid;
-  grid-template-columns: minmax(84px, 0.8fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
   gap: 6px;
 }
 
@@ -920,6 +940,246 @@ kbd {
 }
 
 /* ------------------------------------------------------------------ */
+/* Verzeichnis                                                         */
+/* ------------------------------------------------------------------ */
+
+.verzeichnis {
+  margin-top: 20px;
+  scroll-margin-top: 16px;
+}
+
+.reiter {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--flaeche-2);
+  border: 1px solid var(--linie);
+  border-radius: 7px;
+}
+
+.reiter button {
+  min-height: 34px;
+  padding: 0 12px;
+  background: none;
+  border: 0;
+  border-radius: 5px;
+  font-weight: 600;
+  color: var(--leise);
+  cursor: pointer;
+}
+
+.reiter button[aria-selected="true"] {
+  background: var(--flaeche);
+  color: var(--tinte);
+  box-shadow: 0 1px 3px var(--schatten);
+}
+
+.reiter .zahl {
+  margin-left: 4px;
+  font-family: var(--schrift-daten);
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--leise);
+}
+
+.filter {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.filter-suche {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 900px) {
+  .filter {
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  }
+  .filter-suche {
+    grid-column: auto;
+  }
+}
+
+input[type="search"] {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  background: var(--flaeche-2);
+  border: 1px solid var(--linie);
+  border-radius: var(--radius-klein);
+}
+
+input[type="search"]:focus-visible {
+  outline: 2px solid var(--akzent);
+  outline-offset: 0;
+  border-color: var(--akzent);
+}
+
+.v-status {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 16px;
+  flex-wrap: wrap;
+  margin: 14px 0 6px;
+}
+
+.treffer,
+.v-meldung,
+.v-einleitung {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.treffer {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.v-meldung {
+  color: var(--akzent);
+  font-weight: 600;
+  min-height: 1.3em;
+}
+
+.v-einleitung {
+  color: var(--leise);
+  max-width: 70ch;
+  margin-bottom: 4px;
+}
+
+.v-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--linie);
+}
+
+.v-zeile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "name knopf"
+    "marken knopf";
+  align-items: center;
+  gap: 6px 12px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--linie);
+}
+
+@media (min-width: 700px) {
+  .v-zeile {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "name marken knopf";
+    gap: 6px 16px;
+  }
+}
+
+.v-name {
+  grid-area: name;
+  min-width: 0;
+}
+
+.v-name strong {
+  display: block;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.v-meta {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--leise);
+  font-variant-numeric: tabular-nums;
+}
+
+.v-plaketten {
+  grid-area: marken;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.v-einsetzen {
+  grid-area: knopf;
+}
+
+.b {
+  padding: 1px 6px;
+  border: 1px solid var(--linie);
+  border-radius: 3px;
+  font-family: var(--schrift-daten);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--leise);
+  white-space: nowrap;
+}
+
+.b-ice {
+  background: var(--tafel-grund);
+  border-color: var(--tafel-grund);
+  color: var(--tafel-schrift);
+}
+
+.b-fern {
+  border-color: var(--akzent);
+  color: var(--akzent);
+}
+
+.b-s {
+  background: var(--akzent-zart);
+  border-color: var(--akzent-zart);
+  color: var(--tinte);
+}
+
+.v-mehr {
+  margin-top: 14px;
+}
+
+.quelle {
+  margin: 14px 0 0;
+  font-size: 0.78rem;
+  color: var(--leise);
+}
+
+.g-gruppen {
+  display: grid;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.g-gruppe h3 {
+  margin: 0 0 6px;
+  font-family: var(--schrift-titel);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--leise);
+}
+
+.g-zeile {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "kuerzel name knopf";
+}
+
+.g-kuerzel {
+  grid-area: kuerzel;
+  min-width: 58px;
+  padding: 4px 8px;
+  background: var(--tafel-grund);
+  color: var(--tafel-schrift);
+  border-radius: 4px;
+  font-family: var(--schrift-titel);
+  font-weight: 800;
+  font-size: 1rem;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ */
 /* Fuß und mobile Abspielleiste                                        */
 /* ------------------------------------------------------------------ */
 
@@ -929,13 +1189,22 @@ kbd {
   font-size: 0.85rem;
 }
 
+
+
 .fuss .wrap {
+  display: grid;
+  gap: 8px;
   padding-block: 20px 28px;
 }
 
 .fuss p {
   margin: 0;
   max-width: 72ch;
+}
+
+.fuss a {
+  color: inherit;
+  text-underline-offset: 2px;
 }
 
 .mobil-leiste {
@@ -991,7 +1260,7 @@ kbd {
     height: 38px;
     margin-top: 2px;
   }
-  .plakette {
+  .kopf-rechts {
     margin-left: 52px;
   }
 }

@@ -25,7 +25,10 @@
         <p class="unterzeile">Ansagen für Bahnsteig und Zug zusammenstellen, anpassen und mit Gong abspielen.</p>
       </div>
     </div>
-    <span class="plakette">Inoffiziell</span>
+    <div class="kopf-rechts">
+      <a class="kopf-link" href="#verzeichnis">Alle Bahnhöfe &amp; Züge</a>
+      <span class="plakette">Inoffiziell</span>
+    </div>
   </div>
 </header>
 
@@ -261,6 +264,64 @@
       <p class="stimmen-hinweis" id="stimmen-hinweis"></p>
     </section>
   </form>
+
+  <!-- Verzeichnis -->
+  <section class="verzeichnis paneel" id="verzeichnis" aria-labelledby="h-verzeichnis">
+    <div class="bereich-kopf">
+      <h2 id="h-verzeichnis">Verzeichnis</h2>
+      <div class="reiter" role="tablist" aria-label="Verzeichnis">
+        <button type="button" role="tab" id="reiter-bahnhoefe" aria-selected="true" aria-controls="tafel-bahnhoefe">
+          Bahnhöfe <span class="zahl" id="anzahl-bahnhoefe"></span>
+        </button>
+        <button type="button" role="tab" id="reiter-zuege" aria-selected="false" aria-controls="tafel-zuege" tabindex="-1">
+          Zuggattungen <span class="zahl" id="anzahl-gattungen"></span>
+        </button>
+      </div>
+    </div>
+
+    <div id="tafel-bahnhoefe" role="tabpanel" aria-labelledby="reiter-bahnhoefe">
+      <div class="filter">
+        <div class="feld filter-suche">
+          <label for="v-suche">Suche</label>
+          <input id="v-suche" type="search" placeholder="Name, DS100 oder EVA-Nummer" autocomplete="off">
+        </div>
+        <div class="feld">
+          <label for="v-land">Bundesland</label>
+          <select id="v-land"></select>
+        </div>
+        <div class="feld">
+          <label for="v-verkehr">Verkehr</label>
+          <select id="v-verkehr">
+            <option value="alle">Alle Bahnhöfe</option>
+            <option value="ice">Mit ICE-Halt</option>
+            <option value="fern">Mit Fernverkehr</option>
+            <option value="s">Mit S-Bahn</option>
+            <option value="regio">Nur Nahverkehr</option>
+          </select>
+        </div>
+        <div class="feld">
+          <label for="v-ziel">Einsetzen in</label>
+          <select id="v-ziel"></select>
+        </div>
+      </div>
+      <div class="v-status">
+        <p class="treffer" id="v-treffer" aria-live="polite"></p>
+        <p class="v-meldung" id="v-meldung" role="status"></p>
+      </div>
+      <ul class="v-liste" id="v-zeilen" aria-label="Bahnhöfe"></ul>
+      <button type="button" class="knopf-leise v-mehr" id="v-mehr" hidden></button>
+      <p class="quelle" id="v-quelle"></p>
+    </div>
+
+    <div id="tafel-zuege" role="tabpanel" aria-labelledby="reiter-zuege" hidden>
+      <p class="v-einleitung">
+        Die Zuggattungen im deutschen Personenverkehr, vom ICE bis zur S-Bahn. Mit „Einsetzen“ wird die Gattung
+        für die Ansage übernommen.
+      </p>
+      <p class="v-meldung" id="g-meldung" role="status"></p>
+      <div class="g-gruppen" id="g-gruppen"></div>
+    </div>
+  </section>
 </main>
 
 <footer class="fuss">
@@ -269,6 +330,12 @@
       Inoffizielles Fanprojekt ohne Verbindung zur Deutschen Bahn AG. Originalstimmen und Original-Gongs
       werden nicht verwendet: Der Gong entsteht synthetisch, gesprochen wird mit den Stimmen deines Geräts.
       Bitte nicht für Durchsagen in echten Bahnhöfen oder Zügen einsetzen.
+    </p>
+    <p>
+      Stationsdaten: DB InfraGO AG (RIS::Stations, StaDa), Lizenz
+      <a href="https://creativecommons.org/licenses/by/4.0/deed.de" target="_blank" rel="noopener">CC BY 4.0</a>,
+      aufbereitet über <a href="https://github.com/derhuerst/db-hafas-stations" target="_blank" rel="noopener">db-hafas-stations</a>;
+      © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap-Mitwirkende</a>.
     </p>
   </div>
 </footer>
@@ -285,8 +352,10 @@
   </span>
 </div>
 
+<script src="data/bahnhoefe.js"></script>
 <script src="js/ansagen.js"></script>
 <script src="js/sprecher.js"></script>
 <script src="js/app.js"></script>
+<script src="js/verzeichnis.js"></script>
 </body>
 </html>
